@@ -1,134 +1,192 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-
-// Create axios instance with base URL
-const api = axios.create({
-  baseURL: 'http://localhost:5000'
-});
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import { motion } from "framer-motion";
+import { Trophy, Gamepad, Gift, Medal } from "lucide-react";
 
 const Signup = () => {
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [formData, setFormData] = useState({
+    fullName: "",
+    username: "",
+    email: "",
+    password: "",
+    postCode: "",
+    phoneNumber: "",
+  });
+
   const [message, setMessage] = useState("");
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-  
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setMessage("");
-  
-    try {
-      // Updated endpoint to match backend route
-      const response = await api.post("/api/users/signup", form);
-      setMessage(response.data.message || "Signup successful! Redirecting...");
-  
-      // Store the token in localStorage
-      if (response.data.token) {
-        localStorage.setItem("authToken", response.data.token);
-      }
-  
-      // Redirect to login after 2 seconds
-      setTimeout(() => navigate("/login"), 2000);
-    } catch (error: unknown) {
-      console.error("Signup Error:", error);
-    
-      if (axios.isAxiosError(error) && error.response) {
-        setMessage(error.response.data?.message || "Signup failed. Please try again.");
-      } else {
-        setMessage("An unexpected error occurred.");
-      }
-    }
-    
-  };
-  
-  return (
-    <div style={styles.container}>
-      <h2>Signup</h2>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <input
-          type="text"
-          name="name"
-          placeholder="Name"
-          value={form.name}
-          onChange={handleChange}
-          required
-          style={styles.input}
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-          required
-          style={styles.input}
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={handleChange}
-          required
-          style={styles.input}
-        />
-        <button type="submit" style={styles.button}>Sign Up</button>
-      </form>
-      {message && (
-  <p style={message.includes("successful") ? styles.successMessage : styles.errorMessage}>
-    {message}
-  </p>
-)}
 
+  const handlePhoneChange = (value: string) => {
+    setFormData({ ...formData, phoneNumber: value });
+  };
+
+  const validateForm = () => {
+    const { fullName, username, email, password, postCode, phoneNumber } = formData;
+
+    if (!fullName || !username || !email || !password || !postCode || !phoneNumber) {
+      setError("All fields are required.");
+      return false;
+    }
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setError("Invalid email format.");
+      return false;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return false;
+    }
+    if (!/^\d+$/.test(postCode)) {
+      setError("Post code must be a number.");
+      return false;
+    }
+    setError("");
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setMessage("");
+    setError("");
+
+    try {
+      const response = await fetch("http://localhost:5000/api/users/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Signup failed. Please try again.");
+      }
+
+      setMessage("Registration successful! Please check your email to verify your account.");
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-r from-blue-600 to-blue-500 flex items-center justify-center p-4">
+      <div className="w-full max-w-6xl flex flex-col md:flex-row rounded-2xl overflow-hidden">
+        {/* Left Side - Form */}
+        <div className="w-full md:w-1/2 bg-white p-8 md:p-12">
+          <h2 className="text-3xl font-bold text-blue-600 text-center mb-8">Join ScorePerk</h2>
+          
+          {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+          {message && <p className="text-green-500 text-center mb-4">{message}</p>}
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <input
+              type="text"
+              name="fullName"
+              placeholder="Full Name"
+              className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.fullName}
+              onChange={handleChange}
+            />
+
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.username}
+              onChange={handleChange}
+            />
+
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.email}
+              onChange={handleChange}
+            />
+
+            <div className="relative">
+              <PhoneInput
+                country={"us"}
+                value={formData.phoneNumber}
+                onChange={handlePhoneChange}
+                containerClass="!w-full"
+                inputClass="!w-full !px-4 !py-3 !rounded-lg !bg-gray-50 !border !border-gray-200 focus:!outline-none focus:!ring-2 focus:!ring-blue-500"
+                dropdownClass="!absolute !bg-white !border !border-gray-200 !rounded-lg !shadow-lg !z-50 !mt-1"
+                buttonClass="!border-r-0 !bg-transparent !hover:bg-gray-100"
+              />
+            </div>
+
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.password}
+              onChange={handleChange}
+            />
+
+            <input
+              type="text"
+              name="postCode"
+              placeholder="Post Code"
+              className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.postCode}
+              onChange={handleChange}
+            />
+
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              type="submit"
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              disabled={loading}
+            >
+              {loading ? "Signing Up..." : "Start Your Journey"}
+            </motion.button>
+          </form>
+        </div>
+
+        {/* Right Side - Features */}
+        <div className="w-full md:w-1/2 bg-blue-600 p-8 md:p-12 flex flex-col justify-center">
+          <h2 className="text-4xl font-bold text-white text-center mb-6">Welcome to ScorePerk!</h2>
+          <p className="text-xl text-white text-center mb-12">
+            Compete in thrilling challenges, earn rewards, and climb the leaderboards!
+          </p>
+          
+          <div className="space-y-8">
+            <div className="flex items-center gap-4">
+              <Trophy className="w-8 h-8 text-yellow-300" />
+              <p className="text-xl text-white">Win Cash Prizes</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <Gamepad className="w-8 h-8 text-green-300" />
+              <p className="text-xl text-white">Join Exciting Challenges</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <Gift className="w-8 h-8 text-red-300" />
+              <p className="text-xl text-white">Unlock Perks & Rewards</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <Medal className="w-8 h-8 text-blue-300" />
+              <p className="text-xl text-white">Climb the Leaderboard</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    width: "300px",
-    margin: "50px auto",
-    padding: "20px",
-    border: "1px solid #ccc",
-    borderRadius: "5px",
-    textAlign: "center", // ✅ This is valid as it matches the expected type
-    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column", // ✅ Fix flexDirection by ensuring it's correctly typed
-    gap: "10px",
-  },
-  input: {
-    padding: "10px",
-    fontSize: "16px",
-    borderRadius: "4px",
-    border: "1px solid #ccc",
-  },
-  button: {
-    padding: "10px",
-    fontSize: "16px",
-    backgroundColor: "#007BFF",
-    color: "white",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    transition: "background-color 0.2s",
-  },
-  errorMessage: {
-    marginTop: "10px",
-    color: "#dc3545",
-    fontWeight: "bold",
-  },
-  successMessage: {
-    marginTop: "10px",
-    color: "#28a745",
-    fontWeight: "bold",
-  },
-};
-
 
 export default Signup;
