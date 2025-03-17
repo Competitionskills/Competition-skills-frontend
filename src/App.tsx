@@ -8,16 +8,12 @@ import "./index.css";
 function App() {
   return (
     <Router>
-      <div className="container">
-        <h1>🏆 Competition & Rewards System</h1>
-        <Routes>
-          <Route path="/Signup" element={<Signup />} />
-          <Route path="/Login" element={<Login />} />
-          <Route path="/Home" element={<Home />} />
-
-          <Route path="/dashboard" element={<Dashboard />} />
-        </Routes>
-      </div>
+      <Routes>
+        <Route path="/Signup" element={<Signup />} />
+        <Route path="/Login" element={<Login />} />
+        <Route path="/Home" element={<Home />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
     </Router>
   );
 }
