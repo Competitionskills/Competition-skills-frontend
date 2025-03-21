@@ -22,11 +22,94 @@ import {
 } from 'lucide-react';
 
 import SubmitCode from '../components/submitCode';
-
+import BuyTickets from '../components/BuyTickets';
 
 const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [showSubmitCode, setShowSubmitCode] = useState<boolean>(false);
+  const [showBuyTickets, setShowBuyTickets] = useState<boolean>(false);
+
+  const renderMainContent = () => {
+    return (
+      <>
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-indigo-800">Player Dashboard</h2>
+          <p className="text-indigo-600">Track your gaming progress</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6">
+          <div className="bg-white shadow-lg rounded-xl p-6 border border-indigo-100">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-indigo-800">Monthly Performance</h3>
+              <div className="flex items-center space-x-2 bg-indigo-50 rounded-md px-3 py-1">
+                <span className="text-sm text-indigo-600">Jan 08 - Aug 08</span>
+                <ChevronRight className="h-4 w-4 text-indigo-400" />
+              </div>
+            </div>
+            <div className="h-64">
+              <BarChart />
+            </div>
+          </div>
+
+          <div className="bg-white shadow-lg rounded-xl p-6 border border-indigo-100">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-indigo-800">Recent Activity</h3>
+              <button className="text-sm text-indigo-600 hover:text-indigo-800">View All</button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead>
+                  <tr className="border-b border-indigo-100">
+                    <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Player</th>
+                    <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Activity</th>
+                    <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Details</th>
+                    <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <ActivityRow 
+                    name="Jenny Wilson"
+                    activity="Bought Tickets"
+                    details="5 Prestige Tickets"
+                    time="2m ago"
+                    type="purchase"
+                  />
+                  <ActivityRow 
+                    name="Michael Scott"
+                    activity="Competition"
+                    details="Ranked #1 in Weekly Challenge"
+                    time="5m ago"
+                    type="competition"
+                  />
+                  <ActivityRow 
+                    name="Jim Halpert"
+                    activity="Achievement"
+                    details="Perfect Score Streak"
+                    time="12m ago"
+                    type="achievement"
+                  />
+                  <ActivityRow 
+                    name="Pam Beesly"
+                    activity="Bought Tickets"
+                    details="3 Golden Tickets"
+                    time="15m ago"
+                    type="purchase"
+                  />
+                  <ActivityRow 
+                    name="Dwight Schrute"
+                    activity="Competition"
+                    details="Joined Tournament Alpha"
+                    time="20m ago"
+                    type="competition"
+                  />
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  };
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-800">
@@ -82,7 +165,7 @@ const Dashboard: React.FC = () => {
               <NavItem icon={<Award />} text="Achievements" id="achievements" active={activeTab === 'achievements'} onClick={() => setActiveTab('achievements')} />
               <span className="absolute right-2 top-2.5 text-xs bg-indigo-300 text-indigo-800 px-1.5 py-0.5 rounded-full font-medium">Coming soon</span>
             </div>
-            <NavItem icon={<Ticket />} text="Buy Tickets" id="buy-tickets" active={activeTab === 'buy-tickets'} onClick={() => setActiveTab('buy-tickets')} />
+            <NavItem icon={<Ticket />} text="Buy Tickets" id="buy-tickets" active={showBuyTickets} onClick={() => setShowBuyTickets(true)} />
             <NavItem icon={<Code />} text="Submit Code" id="submit-code" active={showSubmitCode} onClick={() => setShowSubmitCode(true)} />
             <NavItem icon={<Trophy />} text="Leaderboard" id="leaderboard" active={activeTab === 'leaderboard'} onClick={() => setActiveTab('leaderboard')} />
             <NavItem icon={<Activity />} text="Activity" id="activity" active={activeTab === 'activity'} onClick={() => setActiveTab('activity')} />
@@ -169,86 +252,15 @@ const Dashboard: React.FC = () => {
         </header>
 
         <main className="max-w-7xl mx-auto py-6 px-6">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-indigo-800">Player Dashboard</h2>
-            <p className="text-indigo-600">Track your gaming progress</p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6">
-            <div className="bg-white shadow-lg rounded-xl p-6 border border-indigo-100">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-indigo-800">Monthly Performance</h3>
-                <div className="flex items-center space-x-2 bg-indigo-50 rounded-md px-3 py-1">
-                  <span className="text-sm text-indigo-600">Jan 08 - Aug 08</span>
-                  <ChevronRight className="h-4 w-4 text-indigo-400" />
-                </div>
-              </div>
-              <div className="h-64">
-                <BarChart />
-              </div>
-            </div>
-
-            <div className="bg-white shadow-lg rounded-xl p-6 border border-indigo-100">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-indigo-800">Recent Activity</h3>
-                <button className="text-sm text-indigo-600 hover:text-indigo-800">View All</button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full">
-                  <thead>
-                    <tr className="border-b border-indigo-100">
-                      <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Player</th>
-                      <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Activity</th>
-                      <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Details</th>
-                      <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Time</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <ActivityRow 
-                      name="Jenny Wilson"
-                      activity="Bought Tickets"
-                      details="5 Prestige Tickets"
-                      time="2m ago"
-                      type="purchase"
-                    />
-                    <ActivityRow 
-                      name="Michael Scott"
-                      activity="Competition"
-                      details="Ranked #1 in Weekly Challenge"
-                      time="5m ago"
-                      type="competition"
-                    />
-                    <ActivityRow 
-                      name="Jim Halpert"
-                      activity="Achievement"
-                      details="Perfect Score Streak"
-                      time="12m ago"
-                      type="achievement"
-                    />
-                    <ActivityRow 
-                      name="Pam Beesly"
-                      activity="Bought Tickets"
-                      details="3 Golden Tickets"
-                      time="15m ago"
-                      type="purchase"
-                    />
-                    <ActivityRow 
-                      name="Dwight Schrute"
-                      activity="Competition"
-                      details="Joined Tournament Alpha"
-                      time="20m ago"
-                      type="competition"
-                    />
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+          {renderMainContent()}
         </main>
       </div>
 
       {/* Submit Code Modal */}
       <SubmitCode isOpen={showSubmitCode} onClose={() => setShowSubmitCode(false)} />
+
+      {/* Buy Tickets Modal */}
+      <BuyTickets isOpen={showBuyTickets} onClose={() => setShowBuyTickets(false)} />
     </div>
   );
 }
@@ -334,6 +346,7 @@ function BarChart() {
               <span className="text-xs text-indigo-400 w-8">{value}</span>
               <div className="flex-1 border-b border-indigo-100 border-dashed h-0"></div>
             </div>
+          
           ))}
         </div>
         
