@@ -1,0 +1,56 @@
+import React from "react";
+import { Link } from "react-router-dom";
+import { Trophy, Crown } from "lucide-react";
+
+import centerLogo from "../images/center-logo.jpg";
+import scorePerkImg from "../images/scoreperk-img.jpg"; // New left-side logo
+
+const Header = () => {
+  return (
+    <nav className="w-full max-w-full bg-white shadow-sm sticky top-0 z-50 border-b border-blue-100">
+      <div className="container mx-auto px-4 max-w-[100vw]">
+        <div className="flex justify-around items-center h-16">
+          {/* Left Section with New Logo */}
+          <div className="flex items-center space-x-8">
+            <Link to="/" className="flex items-center">
+              <img src={scorePerkImg} alt="ScorePerk Logo" className="h-8 w-auto" />
+            </Link>
+            <div className="hidden md:flex space-x-6">
+              <Link to="/dashboard" className="flex items-center text-blue-600 font-semibold hover:text-blue-700 transition-colors">
+                <Trophy className="w-5 h-5 mr-2" />
+                Competitions
+              </Link>
+              <Link to="/leaderboard" className="flex items-center text-gray-600 hover:text-blue-600 font-semibold transition-colors">
+                <Crown className="w-5 h-5 mr-2" />
+                Leaderboard
+              </Link>
+            </div>
+          </div>
+
+          {/* Center Logo */}
+          <div className="flex-grow flex justify-center">
+            <img src={centerLogo} alt="ScorePerk Center Logo" className="h-12 w-auto" />
+          </div>
+
+          {/* Right Section */}
+          <div className="flex space-x-4">
+            <Link 
+              to="/signup" 
+              className="bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-700 transition-all transform hover:scale-105 hover:shadow-lg hover:shadow-gray-200"
+            >
+              Join ScorePerk
+            </Link>
+            <Link 
+              to="/login" 
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all transform hover:scale-105 hover:shadow-lg hover:shadow-blue-200"
+            >
+              Login ScorePerk
+            </Link>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+export default Header;
