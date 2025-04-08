@@ -25,10 +25,21 @@ const Header = () => {
             </div>
           </div>
 
-          {/* Center Logo */}
-          <div className="flex-grow flex justify-center">
-            <img src={centerLogo} alt="ScorePerk Center Logo" className="h-12 w-auto" />
-          </div>
+ {/* Center Logo as External Home Link */}
+<div className="flex-grow flex justify-center">
+  <a 
+    href="https://competition-skills-frontend.vercel.app/home" 
+    target="_self" 
+    rel="noopener noreferrer"
+  >
+    <img 
+      src={centerLogo} 
+      alt="ScorePerk Center Logo" 
+      className="h-12 w-auto cursor-pointer hover:opacity-90 transition-opacity duration-200" 
+    />
+  </a>
+</div>
+
 
           {/* Right Section */}
           <div className="flex space-x-4">
