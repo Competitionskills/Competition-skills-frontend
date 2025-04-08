@@ -18,11 +18,14 @@ import {
   Star,
   Crown,
   Target,
-  Users
+  Users,
+  Info
 } from 'lucide-react';
 
 import SubmitCode from '../components/submitCode';
 import BuyTickets from '../components/BuyTickets';
+import centerLogo from "../images/dashboard1-logo.jpg";
+import BackgroundImage from "../images/background-img.jpg";
 
 const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("overview");
@@ -112,26 +115,36 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-800">
+    <div 
+      className="flex min-h-screen text-gray-800 relative"
+      style={{
+        backgroundImage: `url(${BackgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      <div className="absolute inset-0 bg-indigo-900/10 backdrop-blur-sm"></div>
+      
       {/* Left Sidebar */}
-      <div className="w-80 bg-gradient-to-b from-indigo-700 to-indigo-600 text-white">
+      <div className="w-80 bg-gradient-to-b from-indigo-700 to-indigo-600 text-white relative z-10">
         {/* Logo Section */}
         <div className="p-5">
-          <div className="flex items-center space-x-3 bg-indigo-500/30 p-3 rounded-xl transform hover:scale-105 transition-transform duration-200">
-            <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 via-purple-400 to-pink-400 rounded-lg blur opacity-50 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
-              <div className="relative bg-indigo-500 p-2 rounded-lg">
-                <Trophy className="h-6 w-6 text-yellow-300" />
-              </div>
-            </div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-200 via-purple-200 to-pink-200 bg-clip-text text-transparent">
-              ScorePerk
-            </h1>
-          </div>
+          <a
+            href="https://competition-skills-frontend.vercel.app/home"
+            target="_self"
+            rel="noopener noreferrer"
+          >
+            <img 
+              src={centerLogo} 
+              alt="ScorePerk Logo" 
+              className="h-12 w-auto mx-auto rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity duration-200" 
+            />
+          </a>
         </div>
-        
+
         {/* Profile Section */}
-        <div className="px-4 py-6">
+        <div className="px-4 py-4">
           <div className="flex flex-col p-4 bg-indigo-500/30 rounded-xl mb-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-2">
               <Crown className="h-5 w-5 text-yellow-300 animate-pulse" />
@@ -150,7 +163,6 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="bg-indigo-600/50 rounded-lg p-3">
               <div className="flex justify-between text-sm mb-2">
-                
               </div>
             </div>
           </div>
@@ -187,9 +199,9 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Middle Stats Section */}
-      <div className="w-96 bg-white/80 border-r border-indigo-100">
+      <div className="w-96 bg-white/80 backdrop-blur-md border-r border-indigo-100/50 relative z-10">
         <div className="p-6">
-          <h2 className="text-xl font-bold text-indigo-800 mb-8">Overview</h2>
+          <h2 className="text-2xl font-bold text-indigo-800 mb-11 mt-2">Overview</h2>
           
           <div className="space-y-4">
             <StatItem title="Total Points" value="12,450" change="+16%" positive={true} />
@@ -198,7 +210,19 @@ const Dashboard: React.FC = () => {
             <StatItem title="Codes Submitted" value="127" change="+8%" positive={true} />
           </div>
           
-          <h2 className="text-lg font-bold text-indigo-800 mt-8 mb-4">Daily Login</h2>
+          <div className="flex items-center space-x-2 mt-8 mb-4">
+            <h2 className="text-lg font-bold text-indigo-800">Daily Login</h2>
+            <div className="group relative">
+              <button className="p-1 hover:bg-indigo-100 rounded-full transition-colors">
+                <Info className="h-4 w-4 text-indigo-500" />
+              </button>
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-2 bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                <p className="text-sm text-indigo-600">Earn daily rewards: 100 points every day and a Prestige Ticket on Day 7.</p>
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-white transform rotate-45"></div>
+              </div>
+            </div>
+          </div>
+          
           <div className="grid grid-cols-7 gap-2">
             {[1, 2, 3, 4, 5, 6, 7].map((day) => (
               <div 
@@ -228,7 +252,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto relative z-10">
         <header className="bg-white/80 backdrop-blur-sm border-b border-indigo-100 sticky top-0 z-10">
           <div className="max-w-7xl mx-auto py-4 px-6 flex justify-between items-center">
             <div className="relative">
@@ -346,7 +370,6 @@ function BarChart() {
               <span className="text-xs text-indigo-400 w-8">{value}</span>
               <div className="flex-1 border-b border-indigo-100 border-dashed h-0"></div>
             </div>
-          
           ))}
         </div>
         
