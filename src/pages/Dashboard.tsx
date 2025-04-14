@@ -131,7 +131,7 @@ const Dashboard: React.FC = () => {
         {/* Logo Section */}
         <div className="p-5">
           <a
-            href="https://competition-skills-frontend.vercel.app/home"
+            href="https://www.scoreperks.co.uk/home"
             target="_self"
             rel="noopener noreferrer"
           >
