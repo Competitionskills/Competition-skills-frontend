@@ -6,6 +6,7 @@ import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import Header from "../components/Header"; // Import Header Component
+import BackgroundImage from "../images/background-img.jpg"; // Ensure this path is correct
 
 type Competition = {
   title: string;
@@ -87,6 +88,7 @@ const Home: React.FC = () => {
   };
 
   return (
+    
     <div className="min-h-screen w-full bg-gray-50 flex flex-col overflow-x-hidden">
       {/* Replaced the old navigation with the Header component */}
       <Header />
@@ -134,6 +136,10 @@ const Home: React.FC = () => {
       </div>
 
       {/* Main Content */}
+      <div
+            className="relative min-h-screen bg-cover bg-center bg-fixed bg-no-repeat"
+            style={{ backgroundImage: `url(${BackgroundImage})` }}
+          >
       <div className="container mx-auto px-4 py-16 max-w-[100vw]">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Featured Challenge */}
@@ -283,7 +289,8 @@ const Home: React.FC = () => {
       </div>
 
       {/* Top Heroes Section */}
-      <div className="bg-blue-50 py-16 w-full max-w-full">
+      
+      <div className="bg-blue-60 py-16 w-full max-w-full">
         <div className="container mx-auto px-4 max-w-[100vw]">
           <div className="flex justify-between items-center mb-8">
             <div className="flex items-center space-x-3">
@@ -355,7 +362,7 @@ const Home: React.FC = () => {
       </div>
 
       {/* Help Section */}
-      <div className="bg-white py-16 w-full max-w-full">
+      <div className="bg-blue-60 py-16 w-full max-w-full">
         <div className="container mx-auto px-4 max-w-[100vw]">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -381,7 +388,7 @@ const Home: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-50 border-t border-blue-100 w-full max-w-full">
+      <footer className="bg-blue-50 border-t border-blue-100 w-full max-w-full">
         <div className="container mx-auto px-4 py-12 max-w-[100vw]">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
@@ -426,6 +433,7 @@ const Home: React.FC = () => {
           </div>
         </div>
       </footer>
+    </div>
     </div>
   );
 };

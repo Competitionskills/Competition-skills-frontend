@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../helpers/axios";
 
 const SignIn = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -8,13 +8,13 @@ const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  // Handle Input Change
+  // ✅ Handle Input Change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError(""); // Clear error when user types
   };
 
-  // Handle Form Submission
+  // ✅ Handle Form Submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(""); // Reset error message
@@ -25,17 +25,16 @@ const SignIn = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:5000/api/users/login", form);
+      const response = await api.post("/api/users/login", form);
 
       if (response.data.token) {
         localStorage.setItem("authToken", response.data.token);
         setError(""); // Clear errors
-        navigate("/dashboard"); // Redirect to Dashboard
+        navigate("/dashboard"); // ✅ Redirect to Dashboard
       }
-    } catch (error) {
-      console.error("Login Error:", error);
-
-      if (axios.isAxiosError(error) && error.response) {
+    } catch (error: any) {
+      console.error("❌ Login Error:", error);
+      if (error.response) {
         setError(error.response.data?.message || "Invalid login credentials.");
       } else {
         setError("An unexpected error occurred.");
@@ -44,7 +43,8 @@ const SignIn = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[100vh] bg-gradient-to-r from-blue-700 to-blue-500 py-12">
+<div className="flex items-center justify-center min-h-[100vh] bg-gradient-to-br from-indigo-400 via-indigo-500 to-blue-700 py-12">
+
       <div className="flex w-full max-w-4xl bg-white rounded-lg shadow-xl overflow-hidden">
         
         {/* Left Side - Sign In Form */}
@@ -88,7 +88,7 @@ const SignIn = () => {
             {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
             <button
               type="submit"
-              className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 font-semibold text-lg"
+              className="w-full bg-gradient-to-br from-indigo-700/90 to-indigo-900/90 text-white py-3 rounded-lg hover:bg-blue-600 font-semibold text-lg"
             >
               Sign in
             </button>
@@ -101,7 +101,7 @@ const SignIn = () => {
         </div>
 
         {/* Right Side - Welcome Message */}
-        <div className="w-1/2 bg-gradient-to-b from-blue-700 to-blue-900 text-white p-10 flex flex-col justify-center">
+        <div className="w-1/2 bg-gradient-to-br from-indigo-700/90 to-indigo-900/90 text-white p-10 flex flex-col justify-center">
           <h2 className="text-3xl font-bold">Welcome back to ScorePerk!</h2>
           <p className="mt-4 text-md font-medium">
             Glad to see you again! Dive back into exciting challenges, earn rewards, and climb the leaderboard.
