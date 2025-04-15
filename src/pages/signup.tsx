@@ -79,7 +79,7 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-blue-600 to-blue-500 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center p-4">
       <div className="w-full max-w-6xl flex flex-col md:flex-row rounded-2xl overflow-hidden">
         {/* Left Side - Form */}
         <div className="w-full md:w-1/2 bg-white p-8 md:p-12">
@@ -150,7 +150,7 @@ const Signup = () => {
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               type="submit"
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              className="w-full bg-gradient-to-br from-indigo-700/90 to-indigo-900/90 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
               disabled={loading}
             >
               {loading ? "Signing Up..." : "Start Your Journey"}
@@ -159,7 +159,7 @@ const Signup = () => {
         </div>
 
         {/* Right Side - Features */}
-        <div className="w-full md:w-1/2 bg-blue-600 p-8 md:p-12 flex flex-col justify-center">
+        <div className="w-full md:w-1/2 bg-gradient-to-br from-indigo-700/90 to-indigo-900/90 p-8 md:p-12 flex flex-col justify-center">
           <h2 className="text-4xl font-bold text-white text-center mb-6">Welcome to ScorePerk!</h2>
           <p className="text-xl text-white text-center mb-12">
             Compete in thrilling challenges, earn rewards, and climb the leaderboards!
