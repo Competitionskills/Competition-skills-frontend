@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../helpers/axios";
 
 const SignIn = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -8,13 +8,13 @@ const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  // Handle Input Change
+  // ✅ Handle Input Change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError(""); // Clear error when user types
   };
 
-  // Handle Form Submission
+  // ✅ Handle Form Submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(""); // Reset error message
@@ -25,17 +25,16 @@ const SignIn = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:5000/api/users/login", form);
+      const response = await api.post("/api/users/login", form);
 
       if (response.data.token) {
         localStorage.setItem("authToken", response.data.token);
         setError(""); // Clear errors
-        navigate("/dashboard"); // Redirect to Dashboard
+        navigate("/dashboard"); // ✅ Redirect to Dashboard
       }
-    } catch (error) {
-      console.error("Login Error:", error);
-
-      if (axios.isAxiosError(error) && error.response) {
+    } catch (error: any) {
+      console.error("❌ Login Error:", error);
+      if (error.response) {
         setError(error.response.data?.message || "Invalid login credentials.");
       } else {
         setError("An unexpected error occurred.");
@@ -44,7 +43,7 @@ const SignIn = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[100vh] bg-gradient-to-r from-blue-700 to-blue-500 py-12">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-blue-700 to-blue-500 py-12">
       <div className="flex w-full max-w-4xl bg-white rounded-lg shadow-xl overflow-hidden">
         
         {/* Left Side - Sign In Form */}
