@@ -28,7 +28,7 @@ const Header = () => {
  {/* Center Logo as External Home Link */}
 <div className="flex-grow flex justify-center">
   <a 
-    href="https://competition-skills-frontend.vercel.app/home" 
+    href="https://www.scoreperks.co.uk/home" 
     target="_self" 
     rel="noopener noreferrer"
   >
