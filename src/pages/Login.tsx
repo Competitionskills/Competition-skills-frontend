@@ -25,7 +25,7 @@ const SignIn = () => {
     }
 
     try {
-      const response = await api.post("/api/users/login", form);
+      const response = await api.post("http://api.scoreperks.co.uk/api/users/login", form);
 
       if (response.data.token) {
         localStorage.setItem("authToken", response.data.token);
@@ -85,7 +85,7 @@ const SignIn = () => {
                 Show Password
               </label>
             </div>
-            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}       
             <button
               type="submit"
               className="w-full bg-gradient-to-br from-indigo-700/90 to-indigo-900/90 text-white py-3 rounded-lg hover:bg-blue-600 font-semibold text-lg"
