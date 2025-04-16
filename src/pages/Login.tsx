@@ -25,7 +25,7 @@ const SignIn = () => {
     }
 
     try {
-      const response = await api.post("http://api.scoreperks.co.uk/api/users/login", form);
+      const response = await api.post("https://api.scoreperks.co.uk/api/users/login", form);
 
       if (response.data.token) {
         localStorage.setItem("authToken", response.data.token);
