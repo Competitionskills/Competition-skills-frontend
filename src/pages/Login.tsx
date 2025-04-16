@@ -26,6 +26,8 @@ const SignIn = () => {
 
     try {
 const response = await api.post("/api/users/login", form, { withCredentials: true });
+console.log("✅ Form data:", form);
+console.log("✅ Sending login to:", api.defaults.baseURL + "/users/login");
 
       if (response.data.token) {
         localStorage.setItem("authToken", response.data.token);
