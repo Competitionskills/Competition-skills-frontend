@@ -25,7 +25,7 @@ const SignIn = () => {
     }
 
     try {
-const response = await api.post("/users/login", form, { withCredentials: true });
+const response = await api.post("/api/users/login", form, { withCredentials: true });
 
       if (response.data.token) {
         localStorage.setItem("authToken", response.data.token);
