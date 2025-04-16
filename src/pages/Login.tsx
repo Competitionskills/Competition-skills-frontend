@@ -15,34 +15,35 @@ const SignIn = () => {
   };
 
   // ✅ Handle Form Submission
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(""); // Reset error message
+ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setError("");
 
-    if (!form.email || !form.password) {
-      setError("Please enter both email and password.");
-      return;
+  if (!form.email || !form.password) {
+    setError("Please enter both email and password.");
+    return;
+  }
+
+  try {
+    const response = await api.post("/users/login", form);
+    console.log("✅ Form data:", form);
+    console.log("✅ Login response:", response.data);
+
+    if (response.data.token) {
+      localStorage.setItem("authToken", response.data.token);
+      setError("");
+      navigate("/dashboard");
     }
-
-    try {
-const response = await api.post("/api/users/login", form, { withCredentials: true });
-console.log("✅ Form data:", form);
-console.log("✅ Sending login to:", api.defaults.baseURL + "/users/login");
-
-      if (response.data.token) {
-        localStorage.setItem("authToken", response.data.token);
-        setError(""); // Clear errors
-        navigate("/dashboard"); // ✅ Redirect to Dashboard
-      }
-    } catch (error: any) {
-      console.error("❌ Login Error:", error);
-      if (error.response) {
-        setError(error.response.data?.message || "Invalid login credentials.");
-      } else {
-        setError("An unexpected error occurred.");
-      }
+  } catch (error: any) {
+    console.error("❌ Login Error:", error);
+    if (error.response) {
+      setError(error.response.data.message || "Invalid login credentials.");
+    } else {
+      setError("An unexpected error occurred.");
     }
-  };
+  }
+};
+
 
   return (
 <div className="flex items-center justify-center min-h-[100vh] bg-gradient-to-br from-indigo-400 via-indigo-500 to-blue-700 py-12">
