@@ -25,21 +25,25 @@ const SignIn = () => {
   }
 
   try {
-    const response = await api.post("/users/login", form);
-    console.log("✅ Form data:", form);
+    const response = await axios.post('/users/login', 
+      JSON.stringify({ email: form.email, password: form.password }),
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+
     console.log("✅ Login response:", response.data);
 
-    if (response.data.token) {
-      localStorage.setItem("authToken", response.data.token);
-      setError("");
-      navigate("/dashboard");
-    }
-  } catch (error: any) {
-    console.error("❌ Login Error:", error);
-    if (error.response) {
-      setError(error.response.data.message || "Invalid login credentials.");
+    // If using cookies, no need to store token manually
+    navigate("/dashboard");
+  } catch (err) {
+    console.error("❌ Login Error:", err);
+    if (!err?.response) {
+      setError("No server response.");
+    } else if (err.response?.status === 401) {
+      setError("Invalid login credentials.");
     } else {
-      setError("An unexpected error occurred.");
+      setError("Login failed.");
     }
   }
 };
