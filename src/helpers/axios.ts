@@ -5,9 +5,9 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL ;
 console.log("✅ Axios Base URL:", API_BASE_URL);
 
 // ✅ Create an Axios instance
-const api = axios.create({
+export const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: false, // If using authentication (cookies, tokens)
+  withCredentials: false,
   headers: {
     "Content-Type": "application/json",
   },
@@ -21,6 +21,7 @@ export const setAuthToken = (token: string | null) => {
     delete api.defaults.headers.common["Authorization"];
   }
 };
+
 
 // ✅ Axios Response Interceptor (Handles 401 Unauthorized Globally)
 api.interceptors.response.use(
