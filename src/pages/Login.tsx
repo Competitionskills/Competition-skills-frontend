@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../helpers/axios";
+import {api, setAuthToken} from "../helpers/axios";
 
 const SignIn = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -15,32 +15,45 @@ const SignIn = () => {
   };
 
   // ✅ Handle Form Submission
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(""); // Reset error message
+ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setError("");
 
-    if (!form.email || !form.password) {
-      setError("Please enter both email and password.");
-      return;
+  if (!form.email || !form.password) {
+    setError("Please enter both email and password.");
+    return;
+  }
+
+  try {
+    const response = await api.post("/users/login",
+      JSON.stringify({ email: form.email, password: form.password }),
+      {
+        headers: { "Content-Type": "application/json" }
+      }
+    );
+
+    console.log("✅ Login response:", response.data);
+
+    const token = response.data.token;
+
+    if (token) {
+      localStorage.setItem("authToken", token);
+      setAuthToken(token); // ← ✅ inject token into Axios headers
+      navigate("/dashboard");
     }
 
-    try {
-      const response = await api.post("/api/users/login", form);
-
-      if (response.data.token) {
-        localStorage.setItem("authToken", response.data.token);
-        setError(""); // Clear errors
-        navigate("/dashboard"); // ✅ Redirect to Dashboard
-      }
-    } catch (error: any) {
-      console.error("❌ Login Error:", error);
-      if (error.response) {
-        setError(error.response.data?.message || "Invalid login credentials.");
-      } else {
-        setError("An unexpected error occurred.");
-      }
+  } catch (err: any) {
+    console.error("❌ Login Error:", err);
+    if (!err?.response) {
+      setError("No server response.");
+    } else if (err.response.status === 401) {
+      setError("Invalid login credentials.");
+    } else {
+      setError("Login failed.");
     }
-  };
+  }
+};
+
 
   return (
 <div className="flex items-center justify-center min-h-[100vh] bg-gradient-to-br from-indigo-400 via-indigo-500 to-blue-700 py-12">
@@ -85,7 +98,7 @@ const SignIn = () => {
                 Show Password
               </label>
             </div>
-            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}       
             <button
               type="submit"
               className="w-full bg-gradient-to-br from-indigo-700/90 to-indigo-900/90 text-white py-3 rounded-lg hover:bg-blue-600 font-semibold text-lg"
