@@ -25,22 +25,28 @@ const SignIn = () => {
   }
 
   try {
-    const response = await api.post('/users/login', 
+    const response = await api.post("/users/login",
       JSON.stringify({ email: form.email, password: form.password }),
       {
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" }
       }
     );
 
     console.log("✅ Login response:", response.data);
 
-    // If using cookies, no need to store token manually
-    navigate("/dashboard");
-  } catch (err) {
+    const token = response.data.token;
+
+    if (token) {
+      localStorage.setItem("authToken", token);
+      setAuthToken(token); // ← ✅ inject token into Axios headers
+      navigate("/dashboard");
+    }
+
+  } catch (err: any) {
     console.error("❌ Login Error:", err);
     if (!err?.response) {
       setError("No server response.");
-    } else if (err.response?.status === 401) {
+    } else if (err.response.status === 401) {
       setError("Invalid login credentials.");
     } else {
       setError("Login failed.");
