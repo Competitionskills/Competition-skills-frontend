@@ -3,6 +3,7 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { motion } from "framer-motion";
 import { Trophy, Gamepad, Gift, Medal } from "lucide-react";
+import api from "../helpers/axios";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -45,6 +46,10 @@ const Signup = () => {
       setError("Post code must be a number.");
       return false;
     }
+    if (!/^\+\d{1,3}\d+$/.test(phoneNumber.replace(/\s+/g, ""))) {
+      setError("Phone number must start with + and contain only digits.");
+      return false;
+    }
     setError("");
     return true;
   };
@@ -57,22 +62,24 @@ const Signup = () => {
     setMessage("");
     setError("");
 
+    // Remove spaces and make sure it starts with +
+    const cleanedPhone = formData.phoneNumber.replace(/\s+/g, "");
+    const finalPhone = cleanedPhone.startsWith("+") ? cleanedPhone : `+${cleanedPhone}`;
+
     try {
-      const response = await fetch("https://api.scoreperks.co.uk/api/users/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+      const response = await api.post("/users/register", {
+        ...formData,
+        phoneNumber: finalPhone,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Signup failed. Please try again.");
-      }
 
       setMessage("Registration successful! Please check your email to verify your account.");
     } catch (error: any) {
-      setError(error.message);
+      console.error("❌ Signup Error:", error);
+      setError(
+        error?.response?.data?.message ||
+        error?.message ||
+        "Signup failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -84,10 +91,10 @@ const Signup = () => {
         {/* Left Side - Form */}
         <div className="w-full md:w-1/2 bg-white p-8 md:p-12">
           <h2 className="text-3xl font-bold text-blue-600 text-center mb-8">Join ScorePerk</h2>
-          
+
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
           {message && <p className="text-green-500 text-center mb-4">{message}</p>}
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <input
               type="text"
@@ -164,7 +171,7 @@ const Signup = () => {
           <p className="text-xl text-white text-center mb-12">
             Compete in thrilling challenges, earn rewards, and climb the leaderboards!
           </p>
-          
+
           <div className="space-y-8">
             <div className="flex items-center gap-4">
               <Trophy className="w-8 h-8 text-yellow-300" />
