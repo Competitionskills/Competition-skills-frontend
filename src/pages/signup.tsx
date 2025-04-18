@@ -58,7 +58,7 @@ const Signup = () => {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:5000/api/users/register", {
+      const response = await fetch("https://api.scoreperks.co.uk/api/users/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

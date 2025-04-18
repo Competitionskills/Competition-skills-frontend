@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../helpers/axios";
 import ForgotPasswordModal from "../components/ForgotPasswordModal";
 import "../styles/animations.css";
+=======
+import {api, setAuthToken} from "../helpers/axios";
 
 const SignIn = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -68,8 +69,21 @@ const SignIn = () => {
       }
     } finally {
       setIsSubmitting(false);
+
     }
-  };
+
+  } catch (err: any) {
+    console.error("❌ Login Error:", err);
+    if (!err?.response) {
+      setError("No server response.");
+    } else if (err.response.status === 401) {
+      setError("Invalid login credentials.");
+    } else {
+      setError("Login failed.");
+    }
+  }
+};
+
 
   return (
     <div className="flex items-center justify-center min-h-[100vh] bg-gradient-to-br from-indigo-400 via-indigo-500 to-blue-700 py-12">
@@ -118,6 +132,7 @@ const SignIn = () => {
                 <p className="text-red-700 text-sm">{error}</p>
               </div>
             )}
+
             <button
               type="submit"
               className="w-full bg-gradient-to-br from-indigo-700/90 to-indigo-900/90 text-white py-3 rounded-lg hover:bg-blue-600 font-semibold text-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
