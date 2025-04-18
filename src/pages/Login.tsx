@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ForgotPasswordModal from "../components/ForgotPasswordModal";
 import "../styles/animations.css";
-=======
 import {api, setAuthToken} from "../helpers/axios";
 
 const SignIn = () => {
@@ -22,18 +21,18 @@ const SignIn = () => {
   // ✅ Handle Form Submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(""); // Reset error message
+    setError("");
     setIsSubmitting(true);
-
+  
     if (!form.email || !form.password) {
       setError("Please enter both email and password.");
       setIsSubmitting(false);
       return;
     }
-
+  
     try {
-      const response = await api.post("https://api.scoreperks.co.uk/api/users/forgot-password", form);
-
+      const response = await api.post("/users/login", form);
+  
       if (response.data.token) {
         localStorage.setItem("authToken", response.data.token);
         setError(""); // Clear errors
@@ -46,11 +45,10 @@ const SignIn = () => {
         formElement.classList.add("animate-shake");
         setTimeout(() => formElement.classList.remove("animate-shake"), 500);
       }
-      
+  
       if (error.response) {
-        // More specific error handling
         const status = error.response.status;
-        
+  
         if (status === 401) {
           setError("Incorrect email or password. Please try again.");
         } else if (status === 404) {
@@ -69,20 +67,8 @@ const SignIn = () => {
       }
     } finally {
       setIsSubmitting(false);
-
     }
-
-  } catch (err: any) {
-    console.error("❌ Login Error:", err);
-    if (!err?.response) {
-      setError("No server response.");
-    } else if (err.response.status === 401) {
-      setError("Invalid login credentials.");
-    } else {
-      setError("Login failed.");
-    }
-  }
-};
+  };
 
 
   return (
