@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Trophy, 
   Award, 
@@ -28,9 +29,22 @@ import centerLogo from "../images/dashboard1-logo.jpg";
 import BackgroundImage from "../images/background-img.jpg";
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [showSubmitCode, setShowSubmitCode] = useState<boolean>(false);
   const [showBuyTickets, setShowBuyTickets] = useState<boolean>(false);
+
+  const handleNavigation = (tab: string) => {
+    if (tab === 'leaderboard') {
+      navigate('/leaderboard');
+    } else if (tab === 'buy-tickets') {
+      setShowBuyTickets(true);
+    } else if (tab === 'submit-code') {
+      setShowSubmitCode(true);
+    } else {
+      setActiveTab(tab);
+    }
+  };
 
   const renderMainContent = () => {
     return (
@@ -172,20 +186,20 @@ const Dashboard: React.FC = () => {
         <div className="flex-1 px-4 overflow-y-auto">
           <p className="text-xs font-semibold text-indigo-200 uppercase tracking-wider px-3 mb-2">Main Menu</p>
           <nav className="space-y-1">
-            <NavItem icon={<Home />} text="Overview" id="overview" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
+            <NavItem icon={<Home />} text="Overview" id="overview" active={activeTab === 'overview'} onClick={() => handleNavigation('overview')} />
             <div className="relative">
-              <NavItem icon={<Award />} text="Achievements" id="achievements" active={activeTab === 'achievements'} onClick={() => setActiveTab('achievements')} />
+              <NavItem icon={<Award />} text="Achievements" id="achievements" active={activeTab === 'achievements'} onClick={() => handleNavigation('achievements')} />
               <span className="absolute right-2 top-2.5 text-xs bg-indigo-300 text-indigo-800 px-1.5 py-0.5 rounded-full font-medium">Coming soon</span>
             </div>
-            <NavItem icon={<Ticket />} text="Buy Tickets" id="buy-tickets" active={showBuyTickets} onClick={() => setShowBuyTickets(true)} />
-            <NavItem icon={<Code />} text="Submit Code" id="submit-code" active={showSubmitCode} onClick={() => setShowSubmitCode(true)} />
-            <NavItem icon={<Trophy />} text="Leaderboard" id="leaderboard" active={activeTab === 'leaderboard'} onClick={() => setActiveTab('leaderboard')} />
-            <NavItem icon={<Activity />} text="Activity" id="activity" active={activeTab === 'activity'} onClick={() => setActiveTab('activity')} />
+            <NavItem icon={<Ticket />} text="Buy Tickets" id="buy-tickets" active={showBuyTickets} onClick={() => handleNavigation('buy-tickets')} />
+            <NavItem icon={<Code />} text="Submit Code" id="submit-code" active={showSubmitCode} onClick={() => handleNavigation('submit-code')} />
+            <NavItem icon={<Trophy />} text="Leaderboard" id="leaderboard" active={activeTab === 'leaderboard'} onClick={() => handleNavigation('leaderboard')} />
+            <NavItem icon={<Activity />} text="Activity" id="activity" active={activeTab === 'activity'} onClick={() => handleNavigation('activity')} />
           </nav>
           
           <p className="text-xs font-semibold text-indigo-200 uppercase tracking-wider px-3 mb-2 mt-6">Settings</p>
           <nav className="space-y-1">
-            <NavItem icon={<Settings />} text="Settings" id="settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+            <NavItem icon={<Settings />} text="Settings" id="settings" active={activeTab === 'settings'} onClick={() => handleNavigation('settings')} />
           </nav>
         </div>
         

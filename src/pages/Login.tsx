@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../helpers/axios";
 import ForgotPasswordModal from "../components/ForgotPasswordModal";
 import "../styles/animations.css";
+import {api, setAuthToken} from "../helpers/axios";
 
 const SignIn = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -21,18 +21,18 @@ const SignIn = () => {
   // ✅ Handle Form Submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(""); // Reset error message
+    setError("");
     setIsSubmitting(true);
-
+  
     if (!form.email || !form.password) {
       setError("Please enter both email and password.");
       setIsSubmitting(false);
       return;
     }
-
+  
     try {
-      const response = await api.post("https://api.scoreperks.co.uk/api/users/forgot-password", form);
-
+      const response = await api.post("/users/login", form);
+  
       if (response.data.token) {
         localStorage.setItem("authToken", response.data.token);
         setError(""); // Clear errors
@@ -45,11 +45,10 @@ const SignIn = () => {
         formElement.classList.add("animate-shake");
         setTimeout(() => formElement.classList.remove("animate-shake"), 500);
       }
-      
+  
       if (error.response) {
-        // More specific error handling
         const status = error.response.status;
-        
+  
         if (status === 401) {
           setError("Incorrect email or password. Please try again.");
         } else if (status === 404) {
@@ -70,6 +69,7 @@ const SignIn = () => {
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <div className="flex items-center justify-center min-h-[100vh] bg-gradient-to-br from-indigo-400 via-indigo-500 to-blue-700 py-12">
@@ -118,6 +118,7 @@ const SignIn = () => {
                 <p className="text-red-700 text-sm">{error}</p>
               </div>
             )}
+
             <button
               type="submit"
               className="w-full bg-gradient-to-br from-indigo-700/90 to-indigo-900/90 text-white py-3 rounded-lg hover:bg-blue-600 font-semibold text-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
