@@ -46,13 +46,17 @@ const Signup = () => {
       setError("Post code must be a number.");
       return false;
     }
-    if (!/^\+\d{1,3}\d+$/.test(phoneNumber.replace(/\s+/g, ""))) {
-      setError("Phone number must start with + and contain only digits.");
+     const phoneWithPlus = phoneNumber.startsWith("+") ? phoneNumber : `+${phoneNumber}`;
+    const cleanedPhone = phoneWithPlus.replace(/\s+/g, "");
+
+    if (!/^\+[1-9]\d{1,14}$/.test(cleanedPhone)) {
+      setError("Phone number must be valid and in international format, e.g. +447911123456");
       return false;
     }
+
     setError("");
     return true;
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
