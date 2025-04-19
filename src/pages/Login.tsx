@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import ForgotPasswordModal from "../components/ForgotPasswordModal";
 import "../styles/animations.css";
 import { api, setAuthToken } from "../helpers/axios";
@@ -144,9 +144,9 @@ const SignIn = () => {
           </p>
           <p className="mt-6 text-md font-medium">
             No account yet?{" "}
-            <a href="#" className="underline font-semibold hover:text-blue-300 transition-colors">
-              Signup
-            </a>
+            <Link to="/signup" className="underline font-semibold hover:text-blue-300 transition-colors">
+              Sign up
+            </Link>
           </p>
         </div>
       </div>
