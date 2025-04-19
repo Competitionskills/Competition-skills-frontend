@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import ForgotPasswordModal from "../components/ForgotPasswordModal";
 import "../styles/animations.css";
-import {api, setAuthToken} from "../helpers/axios";
+import { api, setAuthToken } from "../helpers/axios";
 
 const SignIn = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -12,13 +12,11 @@ const SignIn = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  // ✅ Handle Input Change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    setError(""); // Clear error when user types
+    setError("");
   };
 
-  // ✅ Handle Form Submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
@@ -34,9 +32,10 @@ const SignIn = () => {
       const response = await api.post("/users/login", form);
   
       if (response.data.token) {
+        setAuthToken(response.data.token);
         localStorage.setItem("authToken", response.data.token);
-        setError(""); // Clear errors
-        navigate("/dashboard"); // ✅ Redirect to Dashboard
+        setError("");
+        navigate("/dashboard");
       }
     } catch (error: any) {
       console.error("❌ Login Error:", error);
@@ -70,14 +69,13 @@ const SignIn = () => {
     }
   };
 
-
   return (
-    <div className="flex items-center justify-center min-h-[100vh] bg-gradient-to-br from-indigo-400 via-indigo-500 to-blue-700 py-12">
-      <div className="flex w-full max-w-4xl bg-white rounded-lg shadow-xl overflow-hidden">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-400 via-indigo-500 to-blue-700 py-6 px-4 sm:py-12">
+      <div className="flex flex-col md:flex-row w-full max-w-4xl bg-white rounded-lg shadow-xl overflow-hidden">
         
-        {/* Left Side - Sign In Form */}
-        <div className="w-1/2 p-10 flex flex-col justify-center">
-          <h2 className="text-4xl font-bold text-gray-900 mb-6">Sign in</h2>
+        {/* Sign In Form - Full width on mobile, half width on desktop */}
+        <div className="w-full md:w-1/2 p-6 sm:p-8 md:p-10 flex flex-col justify-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">Sign in</h2>
           <form id="loginForm" onSubmit={handleSubmit}>
             <div className="mb-4">
               <input
@@ -138,22 +136,21 @@ const SignIn = () => {
           </form>
         </div>
 
-        {/* Right Side - Welcome Message */}
-        <div className="w-1/2 bg-gradient-to-br from-indigo-700/90 to-indigo-900/90 text-white p-10 flex flex-col justify-center">
-          <h2 className="text-3xl font-bold">Welcome back to ScorePerk!</h2>
+        {/* Welcome Message - Full width on mobile, half width on desktop */}
+        <div className="w-full md:w-1/2 bg-gradient-to-br from-indigo-700/90 to-indigo-900/90 text-white p-6 sm:p-8 md:p-10 flex flex-col justify-center">
+          <h2 className="text-2xl sm:text-3xl font-bold">Welcome back to ScorePerk!</h2>
           <p className="mt-4 text-md font-medium">
             Glad to see you again! Dive back into exciting challenges, earn rewards, and climb the leaderboard.
           </p>
           <p className="mt-6 text-md font-medium">
             No account yet?{" "}
-            <a href="#" className="underline font-semibold hover:text-blue-300 transition-colors">
-              Signup.
-            </a>
+            <Link to="/signup" className="underline font-semibold hover:text-blue-300 transition-colors">
+              Sign up
+            </Link>
           </p>
         </div>
       </div>
 
-      {/* Forgot Password Modal */}
       <ForgotPasswordModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
