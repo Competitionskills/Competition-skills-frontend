@@ -12,7 +12,7 @@ const Signup = () => {
     email: "",
     password: "",
     postCode: "",
-    phoneNumber: "",
+    phone: "",
   });
 
   const [message, setMessage] = useState("");
@@ -24,11 +24,11 @@ const Signup = () => {
   };
 
   const handlePhoneChange = (value: string) => {
-    setFormData({ ...formData, phoneNumber: value });
+    setFormData({ ...formData, phone: value });
   };
 
   const validateForm = () => {
-    const { fullName, username, email, password, postCode, phoneNumber } = formData;
+    const { fullName, username, email, password, postCode, phone } = formData;
 
     if (!fullName || !username || !email || !password || !postCode || !phoneNumber) {
       setError("All fields are required.");
@@ -46,7 +46,7 @@ const Signup = () => {
       setError("Post code must be a number.");
       return false;
     }
-     const phoneWithPlus = phoneNumber.startsWith("+") ? phoneNumber : `+${phoneNumber}`;
+     const phoneWithPlus = phone.startsWith("+") ? phone : `+${phone}`;
     const cleanedPhone = phoneWithPlus.replace(/\s+/g, "");
 
     if (!/^\+[1-9]\d{1,14}$/.test(cleanedPhone)) {
@@ -67,7 +67,7 @@ const Signup = () => {
     setError("");
 
     // Remove spaces and make sure it starts with +
-    const cleanedPhone = formData.phoneNumber.replace(/\s+/g, "");
+    const cleanedPhone = formData.phone.replace(/\s+/g, "");
     const finalPhone = cleanedPhone.startsWith("+") ? cleanedPhone : `+${cleanedPhone}`;
 
     try {
