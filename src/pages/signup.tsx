@@ -130,7 +130,7 @@ const Signup = () => {
             <div className="relative">
               <PhoneInput
                 country={"us"}
-                value={formData.phoneNumber}
+                value={formData.phone}
                 onChange={handlePhoneChange}
                 containerClass="!w-full"
                 inputClass="!w-full !px-4 !py-3 !rounded-lg !bg-gray-50 !border !border-gray-200 focus:!outline-none focus:!ring-2 focus:!ring-blue-500"
