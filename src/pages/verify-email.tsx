@@ -1,65 +1,43 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-
-// ✅ Inline styles for spinner and layout
-const styles = {
-  wrapper: {
-    display: "flex",
-    flexDirection: "column" as const,
-    alignItems: "center",
-    justifyContent: "center",
-    height: "80vh",
-    fontFamily: "Arial, sans-serif",
-    textAlign: "center" as const,
-  },
-  spinner: {
-    border: "6px solid #eee",
-    borderTop: "6px solid #5f38ff",
-    borderRadius: "50%",
-    width: "50px",
-    height: "50px",
-    animation: "spin 1s linear infinite",
-    marginBottom: "20px",
-  },
-  keyframes: `
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  `
-};
+import api from "../helpers/axios";
 
 const VerifyEmail: React.FC = () => {
+  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [params] = useSearchParams();
 
   useEffect(() => {
-    const token = params.get("token");
+    const token = searchParams.get("token");
 
     if (!token) {
-      navigate("/verify-failed");
+      setStatus("error");
       return;
     }
 
-    fetch(`https://api.scoreperks.co.uk/api/users/verify-email?token=${token}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.message) {
-          setTimeout(() => {
-            navigate("/dashboard");
-          }, 1500);
-        } else {
-          navigate("/verify-failed");
-        }
-      })
-      .catch(() => navigate("/error"));
-  }, [navigate, params]);
+    const verifyEmail = async () => {
+      try {
+        await api.post("/users/verify-email", { token }); // ⬅️ POST with token in body
+        setStatus("success");
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 2000);
+      } catch (error) {
+        console.error("❌ Email verification failed:", error);
+        setStatus("error");
+      }
+    };
+
+    verifyEmail();
+  }, [searchParams, navigate]);
 
   return (
-    <div style={styles.wrapper}>
-      <style>{styles.keyframes}</style>
-      <div style={styles.spinner}></div>
-      <p>Verifying your email...</p>
+    <div style={{ textAlign: "center", padding: "4rem" }}>
+      {status === "loading" && <p>🔄 Verifying your email...</p>}
+      {status === "success" && <p>✅ Email verified! Redirecting to dashboard...</p>}
+      {status === "error" && (
+        <p>❌ Email verification failed. The link may be invalid or expired.</p>
+      )}
     </div>
   );
 };
