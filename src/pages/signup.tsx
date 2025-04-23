@@ -3,6 +3,7 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { motion } from "framer-motion";
 import { Trophy, Gamepad, Gift, Medal } from "lucide-react";
+import api from "../helpers/axios";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -11,7 +12,7 @@ const Signup = () => {
     email: "",
     password: "",
     postCode: "",
-    phoneNumber: "",
+    phone: "",
   });
 
   const [message, setMessage] = useState("");
@@ -23,13 +24,13 @@ const Signup = () => {
   };
 
   const handlePhoneChange = (value: string) => {
-    setFormData({ ...formData, phoneNumber: value });
+    setFormData({ ...formData, phone: value });
   };
 
   const validateForm = () => {
-    const { fullName, username, email, password, postCode, phoneNumber } = formData;
+    const { fullName, username, email, password, postCode, phone } = formData;
 
-    if (!fullName || !username || !email || !password || !postCode || !phoneNumber) {
+    if (!fullName || !username || !email || !password || !postCode || !phone) {
       setError("All fields are required.");
       return false;
     }
@@ -45,9 +46,17 @@ const Signup = () => {
       setError("Post code must be a number.");
       return false;
     }
+     const phoneWithPlus = phone.startsWith("+") ? phone : `+${phone}`;
+    const cleanedPhone = phoneWithPlus.replace(/\s+/g, "");
+
+    if (!/^\+[1-9]\d{1,14}$/.test(cleanedPhone)) {
+      setError("Phone number must be valid and in international format, e.g. +447911123456");
+      return false;
+    }
+
     setError("");
     return true;
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,22 +66,24 @@ const Signup = () => {
     setMessage("");
     setError("");
 
+    // Remove spaces and make sure it starts with +
+    const cleanedPhone = formData.phone.replace(/\s+/g, "");
+    const finalPhone = cleanedPhone.startsWith("+") ? cleanedPhone : `+${cleanedPhone}`;
+
     try {
-      const response = await fetch("https://api.scoreperks.co.uk/api/users/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+      const response = await api.post("/users/register", {
+        ...formData,
+        phone: finalPhone,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Signup failed. Please try again.");
-      }
 
       setMessage("Registration successful! Please check your email to verify your account.");
     } catch (error: any) {
-      setError(error.message);
+      console.error("❌ Signup Error:", error);
+      setError(
+        error?.response?.data?.message ||
+        error?.message ||
+        "Signup failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -84,10 +95,10 @@ const Signup = () => {
         {/* Left Side - Form */}
         <div className="w-full md:w-1/2 bg-white p-8 md:p-12">
           <h2 className="text-3xl font-bold text-blue-600 text-center mb-8">Join ScorePerk</h2>
-          
+
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
           {message && <p className="text-green-500 text-center mb-4">{message}</p>}
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <input
               type="text"
@@ -118,8 +129,10 @@ const Signup = () => {
 
             <div className="relative">
               <PhoneInput
+
                 country="gb"
                 value={formData.phoneNumber}
+
                 onChange={handlePhoneChange}
                 inputStyle={{
                   width: '100%',
@@ -176,7 +189,7 @@ const Signup = () => {
           <p className="text-xl text-white text-center mb-12">
             Compete in thrilling challenges, earn rewards, and climb the leaderboards!
           </p>
-          
+
           <div className="space-y-8">
             <div className="flex items-center gap-4">
               <Trophy className="w-8 h-8 text-yellow-300" />
