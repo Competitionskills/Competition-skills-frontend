@@ -73,7 +73,7 @@ const Signup = () => {
     try {
       const response = await api.post("/users/register", {
         ...formData,
-        phoneNumber: finalPhone,
+        phone: finalPhone,
       });
 
       setMessage("Registration successful! Please check your email to verify your account.");
