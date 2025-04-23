@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Leaderboard from "./pages/Leaderboard";
 import ComingSoon from "./pages/Comingsoon";
+import VerifyEmail from "./pages/verify-email";
 import "./index.css";
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
         <Route path="/Home" element={<Home />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/Leaderboard" element={<Leaderboard />} />
+        <Route path="/verify-email" element={<VerifyEmail/>} />
       </Routes>
     </Router>
   );
