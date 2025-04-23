@@ -30,7 +30,7 @@ const Signup = () => {
   const validateForm = () => {
     const { fullName, username, email, password, postCode, phone } = formData;
 
-    if (!fullName || !username || !email || !password || !postCode || !phoneNumber) {
+    if (!fullName || !username || !email || !password || !postCode || !phone) {
       setError("All fields are required.");
       return false;
     }
