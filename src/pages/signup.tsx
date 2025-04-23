@@ -129,13 +129,27 @@ const Signup = () => {
 
             <div className="relative">
               <PhoneInput
-                country={"us"}
-                value={formData.phone}
+
+                country="gb"
+                value={formData.phoneNumber}
+
                 onChange={handlePhoneChange}
-                containerClass="!w-full"
-                inputClass="!w-full !px-4 !py-3 !rounded-lg !bg-gray-50 !border !border-gray-200 focus:!outline-none focus:!ring-2 focus:!ring-blue-500"
-                dropdownClass="!absolute !bg-white !border !border-gray-200 !rounded-lg !shadow-lg !z-50 !mt-1"
-                buttonClass="!border-r-0 !bg-transparent !hover:bg-gray-100"
+                inputStyle={{
+                  width: '100%',
+                  height: '48px',
+                  fontSize: '16px',
+                  borderRadius: '0.5rem',
+                  backgroundColor: 'rgb(249 250 251)',
+                  borderColor: 'rgb(229 231 235)',
+                }}
+                buttonStyle={{
+                  backgroundColor: 'transparent',
+                  borderColor: 'rgb(229 231 235)',
+                  borderRight: 'none',
+                }}
+                dropdownStyle={{
+                  width: '300px',
+                }}
               />
             </div>
 
