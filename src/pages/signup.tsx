@@ -85,9 +85,6 @@ const Signup = () => {
         <div className="w-full md:w-1/2 bg-white p-8 md:p-12">
           <h2 className="text-3xl font-bold text-blue-600 text-center mb-8">Join ScorePerk</h2>
           
-          {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-          {message && <p className="text-green-500 text-center mb-4">{message}</p>}
-          
           <form onSubmit={handleSubmit} className="space-y-6">
             <input
               type="text"
@@ -167,6 +164,9 @@ const Signup = () => {
             >
               {loading ? "Signing Up..." : "Start Your Journey"}
             </motion.button>
+
+            {message && <p className="text-green-500 text-center mt-4">{message}</p>}
+            {error && <p className="text-red-500 text-center mt-4">{error}</p>}
           </form>
         </div>
 
