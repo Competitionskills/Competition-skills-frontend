@@ -131,7 +131,7 @@ const Signup = () => {
               <PhoneInput
 
                 country="gb"
-                value={formData.phoneNumber}
+                value={formData.phone}
 
                 onChange={handlePhoneChange}
                 inputStyle={{
