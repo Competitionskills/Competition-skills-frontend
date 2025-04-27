@@ -40,6 +40,10 @@ const Dashboard: React.FC = () => {
   const [showSubmitCode, setShowSubmitCode] = useState<boolean>(false);
   const [showBuyTickets, setShowBuyTickets] = useState<boolean>(false);
   const [userName, setUserName] = useState<string | null>(null);
+  const [userPoints, setUserPoints] = useState<number>(0);  
+  const [userTickets, setUserTickets] = useState<number>(0);
+
+
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -53,6 +57,8 @@ const Dashboard: React.FC = () => {
       try {
         const data = await fetchUserProfile();
         setUserName(data.username);
+        setUserPoints(data.points);
+        setUserTickets(data.tickets);  
       } catch (error) {
         console.error("Error fetching user profile:", error);
         navigate('/login');  // If fetching fails (401), redirect to login
@@ -206,8 +212,8 @@ const Dashboard: React.FC = () => {
 
                 <div className="flex items-center space-x-1">
                   <Star className="h-4 w-4 text-yellow-300" />
-                  <p className="text-xs text-indigo-200">Pro Player</p>
-                </div>
+                  <p className="text-sm text-indigo-300">Points: {userPoints}</p>
+                  </div>
               </div>
             </div>
             <div className="bg-indigo-600/50 rounded-lg p-3">
@@ -257,9 +263,10 @@ const Dashboard: React.FC = () => {
           <h2 className="text-2xl font-bold text-indigo-800 mb-11 mt-2">Overview</h2>
           
           <div className="space-y-4">
-            <StatItem title="Total Points" value="12,450" change="+16%" positive={true} />
-            <StatItem title="Prestige Tickets" value="24" change="+12%" positive={true} />
-            <StatItem title="Referrals" value="8" change="+21%" positive={true} />
+          <StatItem title="Total Points" value={userPoints.toString()} change="+16%" positive={true} />
+
+          <StatItem title="Tickets" value={userTickets.toString()} change="+8%" positive={true} />
+          <StatItem title="Referrals" value="8" change="+21%" positive={true} />
             <StatItem title="Codes Submitted" value="127" change="+8%" positive={true} />
           </div>
           
