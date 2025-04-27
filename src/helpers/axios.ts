@@ -13,6 +13,12 @@ export const api = axios.create({
   },
 });
 
+// ✅ Immediately attach token if exists in localStorage
+const token = localStorage.getItem("authToken");
+if (token) {
+  api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+}
+
 // ✅ Function to set Authorization token dynamically
 export const setAuthToken = (token: string | null) => {
   if (token) {
@@ -29,7 +35,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       console.warn("Unauthorized! Redirecting to login...");
-      // Optional: Redirect to login or handle token refresh
+      // Optional: Redirect to login
     }
     return Promise.reject(error);
   }

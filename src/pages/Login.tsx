@@ -33,9 +33,11 @@ const SignIn = () => {
   
       if (response.data.token) {
         setAuthToken(response.data.token);
-        localStorage.setItem("authToken", response.data.token);
-        setError("");
+        localStorage.setItem("token", response.data.token);
         navigate("/dashboard");
+      } else {
+        console.error("❌ Token not found in response");
+        setError("Login failed. No token received.");
       }
     } catch (error: any) {
       console.error("❌ Login Error:", error);
@@ -68,7 +70,6 @@ const SignIn = () => {
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-400 via-indigo-500 to-blue-700 py-6 px-4 sm:py-12">
       <div className="flex flex-col md:flex-row w-full max-w-4xl bg-white rounded-lg shadow-xl overflow-hidden">

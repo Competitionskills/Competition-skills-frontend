@@ -8,8 +8,16 @@ import ComingSoon from "./pages/Comingsoon";
 import VerifyEmail from "./pages/verify-email";
 import ResetPassword from "./pages/reset-password";
 import "./index.css";
+import { useEffect } from "react";
+import { setAuthToken } from "./helpers/axios";
 
 function App() {
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      setAuthToken(token);
+    }
+  }, []);
   return (
     <Router>
       <Routes>

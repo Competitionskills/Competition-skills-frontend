@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { setAuthToken } from '../helpers/axios';
 import { 
   Trophy, 
   Award, 
@@ -23,17 +25,49 @@ import {
   Info
 } from 'lucide-react';
 
+
 import SubmitCode from '../components/submitCode';
 import BuyTickets from '../components/BuyTickets';
 import centerLogo from "../images/dashboard1-logo.jpg";
 import BackgroundImage from "../images/background-img.jpg";
+import { fetchUserProfile } from '../api/userApi';
+
+
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [showSubmitCode, setShowSubmitCode] = useState<boolean>(false);
   const [showBuyTickets, setShowBuyTickets] = useState<boolean>(false);
+  const [userName, setUserName] = useState<string | null>(null);
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setAuthToken(token);
+    } else {
+      navigate('/login');
+    }
+  
+    const getUser = async () => {
+      try {
+        const data = await fetchUserProfile();
+        setUserName(data.username);
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        navigate('/login');  // If fetching fails (401), redirect to login
+      }
+    };
+  
+    getUser();
+  }, [navigate]);
+  
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setAuthToken(null);   // also clear Axios default header
+    navigate("/login");
+  };
+  
   const handleNavigation = (tab: string) => {
     if (tab === 'leaderboard') {
       navigate('/leaderboard');
@@ -164,11 +198,12 @@ const Dashboard: React.FC = () => {
               <Crown className="h-5 w-5 text-yellow-300 animate-pulse" />
             </div>
             <div className="flex items-center space-x-3 mb-3">
-              <div className="h-12 w-12 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold ring-2 ring-white/50">
-                EM
-              </div>
-              <div>
-                <p className="font-medium text-base">Eva Murphy</p>
+            <div className="h-12 w-12 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold ring-2 ring-white/50">
+  {userName ? userName.substring(0, 2).toUpperCase() : "??"}
+</div>
+<div>
+  <p className="font-medium text-base">{userName || "Loading..."}</p>
+
                 <div className="flex items-center space-x-1">
                   <Star className="h-4 w-4 text-yellow-300" />
                   <p className="text-xs text-indigo-200">Pro Player</p>
@@ -205,10 +240,14 @@ const Dashboard: React.FC = () => {
         
         {/* Logout Button */}
         <div className="p-4 border-t border-indigo-600">
-          <button className="flex items-center space-x-2 text-indigo-200 hover:text-white transition-colors w-full py-2 px-3 rounded-lg hover:bg-indigo-500/30">
-            <LogOut className="h-5 w-5 flex-shrink-0" />
-            <span className="text-sm">Log out</span>
-          </button>
+        <button
+  onClick={handleLogout}
+  className="flex items-center space-x-2 text-indigo-200 hover:text-white transition-colors w-full py-2 px-3 rounded-lg hover:bg-indigo-500/30"
+>
+  <LogOut className="h-5 w-5 flex-shrink-0" />
+  <span className="text-sm">Log out</span>
+</button>
+
         </div>
       </div>
 
