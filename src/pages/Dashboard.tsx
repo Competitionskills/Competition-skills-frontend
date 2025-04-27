@@ -45,21 +45,29 @@ const Dashboard: React.FC = () => {
     const token = localStorage.getItem("token");
     if (token) {
       setAuthToken(token);
+    } else {
+      navigate('/login');
     }
   
     const getUser = async () => {
       try {
         const data = await fetchUserProfile();
         setUserName(data.username);
-      } catch (err) {
-        console.error("Failed to fetch user info:", err);
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        navigate('/login');  // If fetching fails (401), redirect to login
       }
     };
   
     getUser();
-  }, []);
+  }, [navigate]);
   
-
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setAuthToken(null);   // also clear Axios default header
+    navigate("/login");
+  };
+  
   const handleNavigation = (tab: string) => {
     if (tab === 'leaderboard') {
       navigate('/leaderboard');
@@ -232,10 +240,14 @@ const Dashboard: React.FC = () => {
         
         {/* Logout Button */}
         <div className="p-4 border-t border-indigo-600">
-          <button className="flex items-center space-x-2 text-indigo-200 hover:text-white transition-colors w-full py-2 px-3 rounded-lg hover:bg-indigo-500/30">
-            <LogOut className="h-5 w-5 flex-shrink-0" />
-            <span className="text-sm">Log out</span>
-          </button>
+        <button
+  onClick={handleLogout}
+  className="flex items-center space-x-2 text-indigo-200 hover:text-white transition-colors w-full py-2 px-3 rounded-lg hover:bg-indigo-500/30"
+>
+  <LogOut className="h-5 w-5 flex-shrink-0" />
+  <span className="text-sm">Log out</span>
+</button>
+
         </div>
       </div>
 
