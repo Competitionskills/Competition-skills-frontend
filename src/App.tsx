@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import Leaderboard from "./pages/Leaderboard";
 import ComingSoon from "./pages/Comingsoon";
 import VerifyEmail from "./pages/verify-email";
+import ResetPassword from "./pages/reset-password";
 import "./index.css";
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/Leaderboard" element={<Leaderboard />} />
         <Route path="/verify-email" element={<VerifyEmail/>} />
+        <Route path="/reset-password" element={<ResetPassword/>} />
       </Routes>
     </Router>
   );
