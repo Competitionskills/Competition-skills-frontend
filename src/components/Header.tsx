@@ -3,9 +3,18 @@ import { Link } from "react-router-dom";
 import { Trophy, Crown } from "lucide-react";
 
 import centerLogo from "../images/center-logo.jpg";
-
+import { useState, useEffect } from "react";
 
 const Header = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+  }, []);
+  
+
+
   return (
     <nav className="w-full max-w-full bg-white shadow-sm sticky top-0 z-50 border-b border-blue-100">
       <div className="container mx-auto px-4 max-w-[100vw]">
@@ -43,18 +52,31 @@ const Header = () => {
 
           {/* Right Section */}
           <div className="flex space-x-4">
-            <Link 
-              to="/signup" 
-              className="bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-700 transition-all transform hover:scale-105 hover:shadow-lg hover:shadow-gray-200"
-            >
-              Join ScorePerk
-            </Link>
-            <Link 
-              to="/login" 
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all transform hover:scale-105 hover:shadow-lg hover:shadow-blue-200"
-            >
-              Login ScorePerk
-            </Link>
+  {!isLoggedIn ? (
+    <>
+      <Link 
+        to="/signup" 
+        className="bg-gray-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-700 transition-all transform hover:scale-105 hover:shadow-lg hover:shadow-gray-200"
+      >
+        Join ScorePerk
+      </Link>
+      <Link 
+        to="/login" 
+        className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all transform hover:scale-105 hover:shadow-lg hover:shadow-blue-200"
+      >
+        Login ScorePerk
+      </Link>
+    </>
+  ) : (
+    <Link 
+      to="/dashboard"
+      className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-all transform hover:scale-105 hover:shadow-lg hover:shadow-green-200"
+    >
+      Go to Dashboard
+    </Link>
+  )}
+
+
           </div>
         </div>
       </div>
