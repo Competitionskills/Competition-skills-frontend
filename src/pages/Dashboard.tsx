@@ -25,14 +25,11 @@ import {
   Info
 } from 'lucide-react';
 
-
 import SubmitCode from '../components/submitCode';
 import BuyTickets from '../components/BuyTickets';
 import centerLogo from "../images/dashboard1-logo.jpg";
 import BackgroundImage from "../images/background-img.jpg";
 import { fetchUserProfile } from '../api/userApi';
-
-
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -40,9 +37,11 @@ const Dashboard: React.FC = () => {
   const [showSubmitCode, setShowSubmitCode] = useState<boolean>(false);
   const [showBuyTickets, setShowBuyTickets] = useState<boolean>(false);
   const [userName, setUserName] = useState<string | null>(null);
+
   const [userPoints, setUserPoints] = useState<number>(0);  
   const [userTickets, setUserTickets] = useState<number>(0);
   const [userPrestigeTickets, setUserPrestigeTickets] = useState<number>(0);
+
 
 
 
@@ -64,16 +63,21 @@ const Dashboard: React.FC = () => {
     setUserPrestigeTickets(data.prestigeTickets);  
       } catch (error) {
         console.error("Error fetching user profile:", error);
-        navigate('/login');  // If fetching fails (401), redirect to login
+        navigate('/login');
       }
     };
   
     getUser();
   }, [navigate]);
+
+  const handleTicketPurchase = (pointsSpent: number, ticketsQuantity: number) => {
+    setUserPoints(prevPoints => prevPoints - pointsSpent);
+    setPrestigeTickets(prevTickets => prevTickets + ticketsQuantity);
+  };
   
   const handleLogout = () => {
     localStorage.removeItem("token");
-    setAuthToken(null);   // also clear Axios default header
+    setAuthToken(null);
     navigate("/login");
   };
   
@@ -207,12 +211,11 @@ const Dashboard: React.FC = () => {
               <Crown className="h-5 w-5 text-yellow-300 animate-pulse" />
             </div>
             <div className="flex items-center space-x-3 mb-3">
-            <div className="h-12 w-12 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold ring-2 ring-white/50">
-  {userName ? userName.substring(0, 2).toUpperCase() : "??"}
-</div>
-<div>
-  <p className="font-medium text-base">{userName || "Loading..."}</p>
-
+              <div className="h-12 w-12 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold ring-2 ring-white/50">
+                {userName ? userName.substring(0, 2).toUpperCase() : "??"}
+              </div>
+              <div>
+                <p className="font-medium text-base">{userName || "Loading..."}</p>
                 <div className="flex items-center space-x-1">
                   <Star className="h-4 w-4 text-yellow-300" />
                   <p className="text-sm text-indigo-300">Points: {userPoints}</p>
@@ -221,6 +224,14 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="bg-indigo-600/50 rounded-lg p-3">
               <div className="flex justify-between text-sm mb-2">
+                <div>
+                  <p className="text-indigo-200">Points</p>
+                  <p className="font-semibold">{userPoints.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-indigo-200">Tickets</p>
+                  <p className="font-semibold">{prestigeTickets}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -249,14 +260,13 @@ const Dashboard: React.FC = () => {
         
         {/* Logout Button */}
         <div className="p-4 border-t border-indigo-600">
-        <button
-  onClick={handleLogout}
-  className="flex items-center space-x-2 text-indigo-200 hover:text-white transition-colors w-full py-2 px-3 rounded-lg hover:bg-indigo-500/30"
->
-  <LogOut className="h-5 w-5 flex-shrink-0" />
-  <span className="text-sm">Log out</span>
-</button>
-
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-2 text-indigo-200 hover:text-white transition-colors w-full py-2 px-3 rounded-lg hover:bg-indigo-500/30"
+          >
+            <LogOut className="h-5 w-5 flex-shrink-0" />
+            <span className="text-sm">Log out</span>
+          </button>
         </div>
       </div>
 
@@ -266,10 +276,10 @@ const Dashboard: React.FC = () => {
           <h2 className="text-2xl font-bold text-indigo-800 mb-11 mt-2">Overview</h2>
           
           <div className="space-y-4">
-          <StatItem title="Total Points" value={userPoints.toString()} change="+16%" positive={true} />
+            <StatItem title="Total Points" value={userPoints.toLocaleString()} change="+16%" positive={true} />
+            <StatItem title="Prestige Tickets" value={prestigeTickets.toString()} change="+12%" positive={true} />
+            <StatItem title="Referrals" value="8" change="+21%" positive={true} />
 
-          <StatItem title="Prestige Tickets" value={userPrestigeTickets.toString()} change="+8%" positive={true} />
-          <StatItem title="Referrals" value="8" change="+21%" positive={true} />
             <StatItem title="Codes Submitted" value="127" change="+8%" positive={true} />
           </div>
           
@@ -332,7 +342,7 @@ const Dashboard: React.FC = () => {
                 <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
               </button>
               <div className="h-9 w-9 rounded-full bg-gradient-to-r from-purple-400 to-indigo-400 flex items-center justify-center text-white font-bold ring-2 ring-indigo-300">
-                EM
+                {userName ? userName.substring(0, 2).toUpperCase() : "??"}
               </div>
             </div>
           </div>
@@ -347,10 +357,15 @@ const Dashboard: React.FC = () => {
       <SubmitCode isOpen={showSubmitCode} onClose={() => setShowSubmitCode(false)} />
 
       {/* Buy Tickets Modal */}
-      <BuyTickets isOpen={showBuyTickets} onClose={() => setShowBuyTickets(false)} />
+      <BuyTickets 
+        isOpen={showBuyTickets} 
+        onClose={() => setShowBuyTickets(false)} 
+        userPoints={userPoints}
+        onPurchase={handleTicketPurchase}
+      />
     </div>
   );
-}
+};
 
 function NavItem({ icon, text, id, active = false, onClick }) {
   return (
