@@ -10,6 +10,7 @@ import ResetPassword from "./pages/reset-password";
 import "./index.css";
 import { useEffect } from "react";
 import { setAuthToken } from "./helpers/axios";
+import { UserProvider } from "./context/userContext";
 
 function App() {
   useEffect(() => {
@@ -19,6 +20,7 @@ function App() {
     }
   }, []);
   return (
+    <UserProvider>
     <Router>
       <Routes>
       <Route path="/" element={<ComingSoon />} />
@@ -31,6 +33,7 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword/>} />
       </Routes>
     </Router>
+    </UserProvider>
   );
 }
 
