@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-
-import { CreditCard, Coins, AlertCircle, Check, X } from 'lucide-react';
-import axios from 'axios'; // Make sure axios is installed
-import { useUser } from '../context/userContext';
+import { CreditCard, Coins, AlertCircle, Check, X, Minus, Plus } from 'lucide-react';
 import { buyPrestigeTicket } from '../api/userApi';
+import { useUser } from '../context/userContext';
+import TicketSuccess from './TicketSuccess'; // ✅ Make sure this exists and is correct
 
 interface BuyTicketsProps {
   isOpen: boolean;
@@ -19,9 +18,8 @@ interface PaymentOption {
   description: string;
 }
 
-
-const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose }) => {
-  const { user, refreshUser } = useUser(); // Access user data and refresh function
+const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose, userPoints, onPurchase }) => {
+  const { refreshUser } = useUser();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
@@ -29,13 +27,10 @@ const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose }) => {
   const [cardholderName, setCardholderName] = useState('');
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [successInfo, setSuccessInfo] = useState<{
-    paymentMethod: 'points' | 'card';
-    pointsUsed?: number;
-    pointsRemaining?: number;
-    amountPaid?: number;
-    quantity: number;
-  }>({ paymentMethod: 'points', quantity: 1 });
+  const [successInfo, setSuccessInfo] = useState<any>({
+    paymentMethod: 'points',
+    quantity: 1,
+  });
 
   if (!isOpen) return null;
 
@@ -62,23 +57,28 @@ const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose }) => {
     }
   ];
 
+  const handlePointsPurchase = async () => {
+    if (userPoints < totalCostPoints) return alert('Not enough points!');
+    try {
+      await buyPrestigeTicket(); // Call backend
+      onPurchase(totalCostPoints, quantity); // Update frontend state
+      await refreshUser();
+      setSuccessInfo({
+        paymentMethod: 'points',
+        pointsUsed: totalCostPoints,
+        quantity
+      });
+      setPurchaseSuccess(true);
+    } catch (err) {
+      console.error("Error buying ticket", err);
+    }
+  };
+
   const handleCardSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSuccessInfo({
       paymentMethod: 'card',
       amountPaid: totalCostMoney,
-      quantity
-    });
-    setPurchaseSuccess(true);
-  };
-
-  const handlePointsPurchase = () => {
-    const newPointsBalance = userPoints - totalCostPoints;
-    onPurchase(totalCostPoints, quantity);
-    setSuccessInfo({
-      paymentMethod: 'points',
-      pointsUsed: totalCostPoints,
-      pointsRemaining: newPointsBalance,
       quantity
     });
     setPurchaseSuccess(true);
@@ -108,44 +108,19 @@ const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose }) => {
   };
 
   const decrementQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(q => q - 1);
-    }
+    if (quantity > 1) setQuantity(q => q - 1);
   };
 
-  const formatCardNumber = (value: string) => {
+  const formatCardNumber = (value: string): string => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    const matches = v.match(/\d{4,16}/g);
-    const match = matches?.[0] ?? '';
+    const match = v.match(/\d{1,16}/)?.[0] ?? ''; // <-- match is now always a string
     const parts: string[] = [];
-
+  
     for (let i = 0; i < match.length; i += 4) {
       parts.push(match.substring(i, i + 4));
     }
-
-    return parts.length ? parts.join(' ') : value;
-  };
-
-  const handlePointsPurchase = async () => {
-    if ((user?.points ?? 0) >= ticketCostPoints) {
-      try {
-        await buyPrestigeTicket(); // 🛒 Call the prestige ticket API
-        await refreshUser(); // 🔄 Refresh user's points after purchase
-        console.log('Prestige ticket bought successfully!');
-        // TODO: Show a success toast here (optional)
-      } catch (error) {
-        console.error('Error purchasing prestige ticket:', error);
-      }
-    } else {
-      alert('Not enough points to buy ticket!');
-    }
-  };
   
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Processing card payment...');
-    // Handle card payment processing here
+    return parts.length ? parts.join(' ') : value;
   };
 
   return (
@@ -155,11 +130,7 @@ const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose }) => {
           <h2 className="text-2xl font-bold text-indigo-900">
             {purchaseSuccess ? 'Purchase Complete' : 'Buy Tickets'}
           </h2>
-          <button
-            onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-
+          <button onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
@@ -177,7 +148,6 @@ const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose }) => {
             />
           ) : (
             <>
-              {/* Payment Options */}
               <div className="grid grid-cols-1 gap-4 mb-8">
                 {paymentOptions.map((option) => (
                   <button
@@ -190,11 +160,7 @@ const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose }) => {
                     }`}
                   >
                     <div className="flex items-start space-x-4">
-                      <div className={`p-3 rounded-lg ${
-                        selectedOption === option.id
-                          ? 'bg-indigo-100'
-                          : 'bg-gray-100'
-                      }`}>
+                      <div className={`p-3 rounded-lg ${selectedOption === option.id ? 'bg-indigo-100' : 'bg-gray-100'}`}>
                         {option.icon}
                       </div>
                       <div className="flex-1 text-left">
@@ -202,38 +168,22 @@ const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose }) => {
                         <p className="text-gray-600 text-sm">{option.description}</p>
                       </div>
                       <div className={`mt-2 h-5 w-5 rounded-full border-2 flex items-center justify-center ${
-                        selectedOption === option.id
-                          ? 'border-indigo-500 bg-indigo-500'
-                          : 'border-gray-300'
+                        selectedOption === option.id ? 'border-indigo-500 bg-indigo-500' : 'border-gray-300'
                       }`}>
-                        {selectedOption === option.id && (
-                          <Check className="h-3 w-3 text-white" />
-                        )}
+                        {selectedOption === option.id && <Check className="h-3 w-3 text-white" />}
                       </div>
                     </div>
                   </button>
                 ))}
               </div>
 
-              {/* Quantity Selector */}
               {selectedOption && (
                 <div className="mb-6 flex items-center justify-center space-x-4">
-                  <button
-                    onClick={decrementQuantity}
-                    className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
-                    disabled={quantity <= 1}
-                  >
+                  <button onClick={decrementQuantity} className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50" disabled={quantity <= 1}>
                     <Minus className="h-5 w-5 text-gray-600" />
                   </button>
-                  <span className="text-xl font-semibold text-gray-900 min-w-[3rem] text-center">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={incrementQuantity}
-                    className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
-                    disabled={selectedOption === 'points' && totalCostPoints > userPoints}
-
-                  >
+                  <span className="text-xl font-semibold text-gray-900 min-w-[3rem] text-center">{quantity}</span>
+                  <button onClick={incrementQuantity} className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50" disabled={selectedOption === 'points' && totalCostPoints > userPoints}>
                     <Plus className="h-5 w-5 text-gray-600" />
                   </button>
                 </div>
@@ -259,11 +209,7 @@ const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose }) => {
                         <p className="text-sm font-medium text-indigo-900">Total cost for {quantity} ticket{quantity !== 1 ? 's' : ''}</p>
                         <p className="text-2xl font-bold text-indigo-600">{totalCostPoints.toLocaleString()} points</p>
                       </div>
-                      <button 
-                        className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={handlePointsPurchase}
-                        disabled={totalCostPoints > userPoints}
-                      >
+                      <button className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" onClick={handlePointsPurchase} disabled={totalCostPoints > userPoints}>
                         Purchase Ticket{quantity !== 1 ? 's' : ''}
                       </button>
                     </div>
