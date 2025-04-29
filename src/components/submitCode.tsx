@@ -81,7 +81,7 @@ const SubmitCode: React.FC<SubmitCodeProps> = ({ isOpen, onClose }) => {
         setMessage(`✅ ${response.data.message}${pointsMessage}`);
         setCode("");
       } else {
-        setMessage(`❌ ${response.data.message}`);
+        setMessage(` ${response.data.message}`);
       }
     } catch (error) {
       setMessage("❌ Failed to redeem code. Please try again later.");
