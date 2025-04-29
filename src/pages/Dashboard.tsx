@@ -72,8 +72,7 @@ const Dashboard: React.FC = () => {
 
   const handleTicketPurchase = (pointsSpent: number, ticketsQuantity: number) => {
     setUserPoints(prevPoints => prevPoints - pointsSpent);
-    setPrestigeTickets(prevTickets => prevTickets + ticketsQuantity);
-  };
+    setUserPrestigeTickets(prev => prev + ticketsQuantity);  };
   
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -230,8 +229,8 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-indigo-200">Tickets</p>
-                  <p className="font-semibold">{prestigeTickets}</p>
-                </div>
+                  <p className="font-semibold">{userPrestigeTickets}</p>
+                  </div>
               </div>
             </div>
           </div>
@@ -277,7 +276,7 @@ const Dashboard: React.FC = () => {
           
           <div className="space-y-4">
             <StatItem title="Total Points" value={userPoints.toLocaleString()} change="+16%" positive={true} />
-            <StatItem title="Prestige Tickets" value={prestigeTickets.toString()} change="+12%" positive={true} />
+            <StatItem title="Prestige Tickets" value={userPrestigeTickets.toString()} change="+12%" positive={true} />
             <StatItem title="Referrals" value="8" change="+21%" positive={true} />
 
             <StatItem title="Codes Submitted" value="127" change="+8%" positive={true} />
