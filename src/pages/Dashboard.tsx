@@ -42,6 +42,8 @@ const Dashboard: React.FC = () => {
   const [userName, setUserName] = useState<string | null>(null);
   const [userPoints, setUserPoints] = useState<number>(0);  
   const [userTickets, setUserTickets] = useState<number>(0);
+  const [userPrestigeTickets, setUserPrestigeTickets] = useState<number>(0);
+
 
 
 
@@ -59,6 +61,7 @@ const Dashboard: React.FC = () => {
         setUserName(data.username);
         setUserPoints(data.points);
         setUserTickets(data.tickets);  
+    setUserPrestigeTickets(data.prestigeTickets);  
       } catch (error) {
         console.error("Error fetching user profile:", error);
         navigate('/login');  // If fetching fails (401), redirect to login
@@ -265,7 +268,7 @@ const Dashboard: React.FC = () => {
           <div className="space-y-4">
           <StatItem title="Total Points" value={userPoints.toString()} change="+16%" positive={true} />
 
-          <StatItem title="Tickets" value={userTickets.toString()} change="+8%" positive={true} />
+          <StatItem title="Prestige Tickets" value={userPrestigeTickets.toString()} change="+8%" positive={true} />
           <StatItem title="Referrals" value="8" change="+21%" positive={true} />
             <StatItem title="Codes Submitted" value="127" change="+8%" positive={true} />
           </div>
