@@ -58,7 +58,7 @@ const SubmitCode: React.FC<SubmitCodeProps> = ({ isOpen, onClose }) => {
 
   const handleSubmitCode = async () => {
     if (!code.trim()) {
-      setMessage("Please enter a valid code.");
+      setMessage("❌ Please enter a valid code.");
       return;
     }
   
@@ -66,7 +66,7 @@ const SubmitCode: React.FC<SubmitCodeProps> = ({ isOpen, onClose }) => {
     setMessage("");
   
     try {
-      // ✅ Get the token from localStorage or context
+      // Get the token from localStorage or context
       const token = localStorage.getItem("token"); // Adjust if using Context/AuthProvider
   
       const response = await axios.post<RedeemCodeResponse>(
@@ -74,15 +74,16 @@ const SubmitCode: React.FC<SubmitCodeProps> = ({ isOpen, onClose }) => {
         { code: code.trim() },
         {
           headers: {
-            Authorization: `Bearer ${token}`, // ✅ Include JWT token
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }
       );
   
       if (response.data.success) {
-        setMessage(`✅ ${response.data.message}${response.data.points ? ` (+${response.data.points} points)` : ''}`);
-        setCode(""); // Reset code input after success
+        const pointsMessage = response.data.points ? ` (+${response.data.points} points)` : '';
+        setMessage(`✅ ${response.data.message}${pointsMessage}`);
+        setCode("");
       } else {
         setMessage(`❌ ${response.data.message}`);
       }
@@ -93,7 +94,6 @@ const SubmitCode: React.FC<SubmitCodeProps> = ({ isOpen, onClose }) => {
       setIsLoading(false);
     }
   };
-  
 
   // Reset State & Close Modal
   const handleClose = () => {
@@ -215,7 +215,7 @@ const SubmitCode: React.FC<SubmitCodeProps> = ({ isOpen, onClose }) => {
           {/* Message Display */}
           {message && (
             <div className={`mt-4 p-3 rounded-lg ${
-              message.includes('✅') 
+              message.startsWith('✅') 
                 ? 'bg-green-50 text-green-800' 
                 : 'bg-red-50 text-red-800'
             }`}>
