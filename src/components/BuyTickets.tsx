@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { CreditCard, Coins, ChevronRight, AlertCircle, Check, X, Plus, Minus } from 'lucide-react';
-import TicketSuccess from './TicketSuccess';
+
+import { CreditCard, Coins, AlertCircle, Check, X } from 'lucide-react';
+import axios from 'axios'; // Make sure axios is installed
+import { useUser } from '../context/userContext';
+import { buyPrestigeTicket } from '../api/userApi';
 
 interface BuyTicketsProps {
   isOpen: boolean;
@@ -16,7 +19,9 @@ interface PaymentOption {
   description: string;
 }
 
-const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose, userPoints, onPurchase }) => {
+
+const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose }) => {
+  const { user, refreshUser } = useUser(); // Access user data and refresh function
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
@@ -38,6 +43,9 @@ const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose, userPoints, on
   const ticketCostMoney = 1.99;
   const totalCostPoints = ticketCostPoints * quantity;
   const totalCostMoney = +(ticketCostMoney * quantity).toFixed(2);
+
+
+  if (!isOpen) return null;
 
   const paymentOptions: PaymentOption[] = [
     {
@@ -110,16 +118,34 @@ const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose, userPoints, on
     const matches = v.match(/\d{4,16}/g);
     const match = matches?.[0] ?? '';
     const parts: string[] = [];
-  
+
     for (let i = 0; i < match.length; i += 4) {
       parts.push(match.substring(i, i + 4));
     }
 
-    if (parts.length) {
-      return parts.join(' ');
+    return parts.length ? parts.join(' ') : value;
+  };
+
+  const handlePointsPurchase = async () => {
+    if ((user?.points ?? 0) >= ticketCostPoints) {
+      try {
+        await buyPrestigeTicket(); // 🛒 Call the prestige ticket API
+        await refreshUser(); // 🔄 Refresh user's points after purchase
+        console.log('Prestige ticket bought successfully!');
+        // TODO: Show a success toast here (optional)
+      } catch (error) {
+        console.error('Error purchasing prestige ticket:', error);
+      }
     } else {
-      return value;
+      alert('Not enough points to buy ticket!');
     }
+  };
+  
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Processing card payment...');
+    // Handle card payment processing here
   };
 
   return (
@@ -133,6 +159,7 @@ const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose, userPoints, on
             onClick={handleClose}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
+
             <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
@@ -205,6 +232,7 @@ const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose, userPoints, on
                     onClick={incrementQuantity}
                     className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
                     disabled={selectedOption === 'points' && totalCostPoints > userPoints}
+
                   >
                     <Plus className="h-5 w-5 text-gray-600" />
                   </button>

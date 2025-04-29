@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
-import axios from 'axios';
+import api from '../helpers/axios';
 
 interface Question {
   question: string;
@@ -69,16 +69,12 @@ const SubmitCode: React.FC<SubmitCodeProps> = ({ isOpen, onClose }) => {
       // Get the token from localStorage or context
       const token = localStorage.getItem("token"); // Adjust if using Context/AuthProvider
   
-      const response = await axios.post<RedeemCodeResponse>(
-        "/api/redeem-code",
-        { code: code.trim() },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+
+      const response = await api.post<RedeemCodeResponse>(
+        "/points/redeem-code",
+        { code: code.trim() }
       );
+      
   
       if (response.data.success) {
         const pointsMessage = response.data.points ? ` (+${response.data.points} points)` : '';
