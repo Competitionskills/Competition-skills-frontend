@@ -63,9 +63,14 @@ const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose, userPoints, on
       await buyPrestigeTicket(); // Call backend
       onPurchase(totalCostPoints, quantity); // Update frontend state
       await refreshUser();
+      
+      // Calculate remaining points after purchase
+      const pointsRemaining = userPoints - totalCostPoints;
+      
       setSuccessInfo({
         paymentMethod: 'points',
         pointsUsed: totalCostPoints,
+        pointsRemaining: pointsRemaining,
         quantity
       });
       setPurchaseSuccess(true);
