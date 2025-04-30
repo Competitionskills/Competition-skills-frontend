@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
 import { setAuthToken } from '../helpers/axios';
 import { 
   Trophy, 
@@ -42,10 +41,6 @@ const Dashboard: React.FC = () => {
   const [userTickets, setUserTickets] = useState<number>(0);
   const [userPrestigeTickets, setUserPrestigeTickets] = useState<number>(0);
 
-
-
-
-
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -60,7 +55,7 @@ const Dashboard: React.FC = () => {
         setUserName(data.username);
         setUserPoints(data.points);
         setUserTickets(data.tickets);  
-    setUserPrestigeTickets(data.prestigeTickets);  
+        setUserPrestigeTickets(data.prestigeTickets);  
       } catch (error) {
         console.error("Error fetching user profile:", error);
         navigate('/login');
@@ -72,7 +67,13 @@ const Dashboard: React.FC = () => {
 
   const handleTicketPurchase = (pointsSpent: number, ticketsQuantity: number) => {
     setUserPoints(prevPoints => prevPoints - pointsSpent);
-    setUserPrestigeTickets(prev => prev + ticketsQuantity);  };
+    setUserPrestigeTickets(prev => prev + ticketsQuantity);
+  };
+
+  // Handler for updating points when a code is redeemed
+  const handlePointsUpdate = useCallback((points: number) => {
+    setUserPoints(prevPoints => prevPoints + points);
+  }, []);
   
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -218,7 +219,7 @@ const Dashboard: React.FC = () => {
                 <div className="flex items-center space-x-1">
                   <Star className="h-4 w-4 text-yellow-300" />
                   <p className="text-sm text-indigo-300">Points: {userPoints}</p>
-                  </div>
+                </div>
               </div>
             </div>
             <div className="bg-indigo-600/50 rounded-lg p-3">
@@ -230,7 +231,7 @@ const Dashboard: React.FC = () => {
                 <div>
                   <p className="text-indigo-200">Tickets</p>
                   <p className="font-semibold">{userPrestigeTickets}</p>
-                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -278,7 +279,6 @@ const Dashboard: React.FC = () => {
             <StatItem title="Total Points" value={userPoints.toLocaleString()} change="+16%" positive={true} />
             <StatItem title="Prestige Tickets" value={userPrestigeTickets.toString()} change="+12%" positive={true} />
             <StatItem title="Referrals" value="8" change="+21%" positive={true} />
-
             <StatItem title="Codes Submitted" value="127" change="+8%" positive={true} />
           </div>
           
@@ -353,7 +353,11 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Submit Code Modal */}
-      <SubmitCode isOpen={showSubmitCode} onClose={() => setShowSubmitCode(false)} />
+      <SubmitCode 
+        isOpen={showSubmitCode} 
+        onClose={() => setShowSubmitCode(false)}
+        onPointsUpdated={handlePointsUpdate}
+      />
 
       {/* Buy Tickets Modal */}
       <BuyTickets 
