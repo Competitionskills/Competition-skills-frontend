@@ -51,6 +51,8 @@ const Dashboard: React.FC = () => {
   const [userPoints, setUserPoints] = useState<number>(0);  
   const [userTickets, setUserTickets] = useState<number>(0);
   const [userPrestigeTickets, setUserPrestigeTickets] = useState<number>(0);
+  const [userReferrals, setUserReferrals] = useState<number>(8);
+  const [userCodesSubmitted, setUserCodesSubmitted] = useState<number>(127);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -67,6 +69,9 @@ const Dashboard: React.FC = () => {
         setUserPoints(data.points);
         setUserTickets(data.tickets);  
         setUserPrestigeTickets(data.prestigeTickets);  
+        // If API provides these values, uncomment the lines below
+        // setUserReferrals(data.referrals || 8);
+        // setUserCodesSubmitted(data.codesSubmitted || 127);
       } catch (error) {
         console.error("Error fetching user profile:", error);
         navigate('/login');
@@ -84,6 +89,7 @@ const Dashboard: React.FC = () => {
   // Handler for updating points when a code is redeemed
   const handlePointsUpdate = useCallback((points: number) => {
     setUserPoints(prevPoints => prevPoints + points);
+    setUserCodesSubmitted(prev => prev + 1);
   }, []);
   
   const handleLogout = () => {
@@ -145,18 +151,26 @@ const Dashboard: React.FC = () => {
         closeMobileMenu={() => setMobileMenuOpen(false)}
       />
 
-      {/* Middle Stats Section - hidden on mobile or shown conditionally */}
-      <StatsPanel 
-        userPoints={userPoints}
-        userPrestigeTickets={userPrestigeTickets}
-        isMobileView={mobileStatsOpen}
-        toggleMobileView={toggleMobileStats}
-      />
+      {/* Middle Stats Section - hidden on mobile, shown on desktop */}
+      <div className="hidden md:block">
+        <StatsPanel 
+          userPoints={userPoints}
+          userPrestigeTickets={userPrestigeTickets}
+          isMobileView={false}
+          toggleMobileView={() => {}}
+        />
+      </div>
 
       {/* Main Content */}
       <MainContent 
         userName={userName}
         activeTab={activeTab}
+        userPoints={userPoints}
+        userPrestigeTickets={userPrestigeTickets}
+        userReferrals={userReferrals}
+        userCodesSubmitted={userCodesSubmitted}
+        isMobileView={mobileStatsOpen}
+        toggleMobileView={toggleMobileStats}
       />
 
       {/* Mobile Bottom Navigation - only visible on mobile */}

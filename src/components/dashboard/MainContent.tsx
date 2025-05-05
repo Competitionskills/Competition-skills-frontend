@@ -1,14 +1,29 @@
 import React from 'react';
-import { Search, Bell } from 'lucide-react';
+import { Search, Bell, ChevronRight, Info, Gift } from 'lucide-react';
 import { ActivityRow } from './ActivityRow';
 import { BarChart } from './BarChart';
 
 interface MainContentProps {
   userName: string | null;
   activeTab: string;
+  userPoints?: number;
+  userPrestigeTickets?: number;
+  userReferrals?: number;
+  userCodesSubmitted?: number;
+  isMobileView?: boolean;
+  toggleMobileView?: () => void;
 }
 
-const MainContent: React.FC<MainContentProps> = ({ userName, activeTab }) => {
+const MainContent: React.FC<MainContentProps> = ({ 
+  userName, 
+  activeTab,
+  userPoints = 0,
+  userPrestigeTickets = 0,
+  userReferrals = 8,
+  userCodesSubmitted = 127,
+  isMobileView = false,
+  toggleMobileView = () => {}
+}) => {
   return (
     <div className="flex-1 overflow-auto relative z-10">
       {/* Desktop Header - Hidden on mobile */}
@@ -38,6 +53,93 @@ const MainContent: React.FC<MainContentProps> = ({ userName, activeTab }) => {
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-indigo-800">Player Dashboard</h2>
           <p className="text-indigo-600">Track your gaming progress</p>
+        </div>
+
+        {/* Mobile Stats Section - Visible when activeTab is 'overview' or when mobileStatsOpen is true */}
+        <div className="md:hidden mb-6">
+          {(activeTab === 'overview' || isMobileView) && (
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-indigo-100 overflow-hidden">
+              <div className="p-4">
+                <h3 className="text-lg font-bold text-indigo-800 mb-4">Overview</h3>
+                
+                <div className="space-y-3 mb-4">
+                  <div className="flex justify-between items-center p-3 bg-gradient-to-r from-indigo-50 to-white rounded-lg">
+                    <div>
+                      <p className="text-sm text-indigo-500">Total Points</p>
+                      <p className="text-xl font-bold text-indigo-900">{userPoints.toLocaleString()}</p>
+                    </div>
+                    <div className="px-2 py-1 rounded bg-green-100 text-green-600">+16%</div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center p-3 bg-gradient-to-r from-indigo-50 to-white rounded-lg">
+                    <div>
+                      <p className="text-sm text-indigo-500">Prestige Tickets</p>
+                      <p className="text-xl font-bold text-indigo-900">{userPrestigeTickets}</p>
+                    </div>
+                    <div className="px-2 py-1 rounded bg-green-100 text-green-600">+12%</div>
+                  </div>
+
+                  <div className="flex justify-between items-center p-3 bg-gradient-to-r from-indigo-50 to-white rounded-lg">
+                    <div>
+                      <p className="text-sm text-indigo-500">Referrals</p>
+                      <p className="text-xl font-bold text-indigo-900">{userReferrals}</p>
+                    </div>
+                    <div className="px-2 py-1 rounded bg-green-100 text-green-600">+21%</div>
+                  </div>
+
+                  <div className="flex justify-between items-center p-3 bg-gradient-to-r from-indigo-50 to-white rounded-lg">
+                    <div>
+                      <p className="text-sm text-indigo-500">Codes Submitted</p>
+                      <p className="text-xl font-bold text-indigo-900">{userCodesSubmitted}</p>
+                    </div>
+                    <div className="px-2 py-1 rounded bg-green-100 text-green-600">+8%</div>
+                  </div>
+                </div>
+                
+                <div className="mt-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h4 className="text-sm font-bold text-indigo-700">Daily Login</h4>
+                    <div className="group relative">
+                      <Info className="h-4 w-4 text-indigo-400 cursor-help" />
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-white rounded-lg shadow-lg border border-indigo-100 text-xs text-gray-600">
+                        Earn Daily Rewards: 100 points every day and Prestige ticket on Day 7
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-7 gap-1">
+                    {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                      <div 
+                        key={day} 
+                        className={`h-8 rounded-md flex items-center justify-center ${
+                          day <= 5 
+                            ? 'bg-gradient-to-br from-green-100 to-green-200 border border-green-300 text-green-700' 
+                            : 'bg-gray-100 border border-gray-200 text-gray-400'
+                        }`}
+                      >
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-4 p-3 bg-indigo-50 rounded-lg">
+                  <div className="flex items-center gap-2 text-indigo-600">
+                    <div className="p-1 bg-indigo-100 rounded">
+                      <Gift className="h-4 w-4" />
+                    </div>
+                    <span className="text-sm font-medium">Day 7 Reward:</span>
+                  </div>
+                  <p className="mt-1 text-sm text-indigo-700 font-semibold">
+                    500 points + 1 Prestige ticket
+                  </p>
+                </div>
+                
+                <button className="w-full mt-4 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white py-2 px-4 rounded-lg font-medium text-sm">
+                  Claim Daily Reward
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-6">
@@ -114,11 +216,5 @@ const MainContent: React.FC<MainContentProps> = ({ userName, activeTab }) => {
     </div>
   );
 };
-
-const ChevronRight = ({ className = "h-5 w-5" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="9 18 15 12 9 6"></polyline>
-  </svg>
-);
 
 export default MainContent;
