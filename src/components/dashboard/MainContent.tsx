@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Bell, ChevronRight, Info, Gift } from 'lucide-react';
 import { ActivityRow } from './ActivityRow';
 import { BarChart } from './BarChart';
+import { getDailyLoginStatus, claimDailyReward } from '../../api/userApi';
 
 interface MainContentProps {
   userName: string | null;
@@ -24,6 +25,60 @@ const MainContent: React.FC<MainContentProps> = ({
   isMobileView = false,
   toggleMobileView = () => {}
 }) => {
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [canClaim, setCanClaim] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [nextReward, setNextReward] = useState({ points: 100, prestigeTickets: 0 });
+
+  useEffect(() => {
+    const fetchLoginStatus = async () => {
+      try {
+        const status = await getDailyLoginStatus();
+        setCurrentStreak(status.currentStreak);
+        setCanClaim(status.canClaim);
+        
+        // Calculate next reward
+        const nextDay = status.currentStreak + 1;
+        const isDay7 = nextDay % 7 === 0;
+        setNextReward({
+          points: 100,
+          prestigeTickets: isDay7 ? 1 : 0
+        });
+      } catch (error) {
+        console.error('Failed to fetch login status:', error);
+      }
+    };
+
+    fetchLoginStatus();
+  }, []);
+
+  const handleClaimReward = async () => {
+    if (!canClaim || isLoading) return;
+
+    setIsLoading(true);
+    try {
+      const result = await claimDailyReward();
+      if (result.success) {
+        setCanClaim(false);
+        setCurrentStreak(result.newStreak);
+        
+        // Update next reward after claiming
+        const nextDay = result.newStreak + 1;
+        const isDay7 = nextDay % 7 === 0;
+        setNextReward({
+          points: 100,
+          prestigeTickets: isDay7 ? 1 : 0
+        });
+      }
+    } catch (error) {
+      console.error('Failed to claim reward:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const todayInCycle = (currentStreak % 7 === 0 && currentStreak !== 0) ? 7 : currentStreak % 7;
+
   return (
     <div className="flex-1 overflow-auto relative z-10">
       {/* Desktop Header - Hidden on mobile */}
@@ -55,7 +110,7 @@ const MainContent: React.FC<MainContentProps> = ({
           <p className="text-indigo-600">Track your gaming progress</p>
         </div>
 
-        {/* Mobile Stats Section - Visible when activeTab is 'overview' or when mobileStatsOpen is true */}
+        {/* Mobile Stats Section */}
         <div className="md:hidden mb-6">
           {(activeTab === 'overview' || isMobileView) && (
             <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-indigo-100 overflow-hidden">
@@ -102,7 +157,7 @@ const MainContent: React.FC<MainContentProps> = ({
                     <div className="group relative">
                       <Info className="h-4 w-4 text-indigo-400 cursor-help" />
                       <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-white rounded-lg shadow-lg border border-indigo-100 text-xs text-gray-600">
-                        Earn Daily Rewards: 100 points every day and Prestige ticket on Day 7
+                        Earn Daily Rewards: 100 points every day, plus a Prestige ticket on Day 7!
                       </div>
                     </div>
                   </div>
@@ -111,7 +166,7 @@ const MainContent: React.FC<MainContentProps> = ({
                       <div 
                         key={day} 
                         className={`h-8 rounded-md flex items-center justify-center ${
-                          day <= 5 
+                          day <= todayInCycle
                             ? 'bg-gradient-to-br from-green-100 to-green-200 border border-green-300 text-green-700' 
                             : 'bg-gray-100 border border-gray-200 text-gray-400'
                         }`}
@@ -127,15 +182,21 @@ const MainContent: React.FC<MainContentProps> = ({
                     <div className="p-1 bg-indigo-100 rounded">
                       <Gift className="h-4 w-4" />
                     </div>
-                    <span className="text-sm font-medium">Day 7 Reward:</span>
+                    <span className="text-sm font-medium">Next Reward:</span>
                   </div>
                   <p className="mt-1 text-sm text-indigo-700 font-semibold">
-                    500 points + 1 Prestige ticket
+                    {nextReward.points} points
+                    {nextReward.prestigeTickets > 0 && ` + ${nextReward.prestigeTickets} Prestige ticket`}
                   </p>
                 </div>
                 
-                <button className="w-full mt-4 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white py-2 px-4 rounded-lg font-medium text-sm">
-                  Claim Daily Reward
+                <button 
+                  onClick={handleClaimReward}
+                  disabled={!canClaim || isLoading}
+                  className={`w-full mt-4 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white py-2 px-4 rounded-lg font-medium text-sm
+                    ${(!canClaim || isLoading) ? 'opacity-50 cursor-not-allowed' : 'hover:from-indigo-500 hover:to-indigo-400'}`}
+                >
+                  {isLoading ? 'Claiming...' : canClaim ? 'Claim Daily Reward' : 'Already Claimed'}
                 </button>
               </div>
             </div>
