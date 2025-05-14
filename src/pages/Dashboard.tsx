@@ -1,31 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { setAuthToken } from '../helpers/axios';
-import { 
-  Trophy, 
-  Award, 
-  Ticket,
-  Calendar, 
-  Code, 
-  Settings, 
-  LogOut, 
-  Home, 
-  BarChart3, 
-  Activity, 
-  Bell,
-  Search,
-  ChevronRight,
-  Gift,
-  Zap,
-  Star,
-  Crown,
-  Target,
-  Users,
-  Info,
-  Menu,
-  X
-} from 'lucide-react';
-
+import { fetchUserProfile } from '../api/userApi';
 import SubmitCode from '../components/submitCode';
 import BuyTickets from '../components/BuyTickets';
 import Sidebar from '../components/dashboard/Sidebar';
@@ -33,7 +9,6 @@ import StatsPanel from '../components/dashboard/StatsPanel';
 import MainContent from '../components/dashboard/MainContent';
 import MobileHeader from '../components/dashboard/MobileHeader';
 import MobileNavbar from '../components/dashboard/MobileNavbar';
-import { fetchUserProfile } from '../api/userApi';
 
 // Import background and logo images
 import centerLogo from "../images/dashboard1-logo.jpg";
@@ -51,8 +26,6 @@ const Dashboard: React.FC = () => {
   const [userPoints, setUserPoints] = useState<number>(0);  
   const [userTickets, setUserTickets] = useState<number>(0);
   const [userPrestigeTickets, setUserPrestigeTickets] = useState<number>(0);
-  const [userReferrals, setUserReferrals] = useState<number>(8);
-  const [userCodesSubmitted, setUserCodesSubmitted] = useState<number>(127);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -69,9 +42,6 @@ const Dashboard: React.FC = () => {
         setUserPoints(data.points);
         setUserTickets(data.tickets);  
         setUserPrestigeTickets(data.prestigeTickets);  
-        // If API provides these values, uncomment the lines below
-        // setUserReferrals(data.referrals || 8);
-        // setUserCodesSubmitted(data.codesSubmitted || 127);
       } catch (error) {
         console.error("Error fetching user profile:", error);
         navigate('/login');
@@ -86,10 +56,12 @@ const Dashboard: React.FC = () => {
     setUserPrestigeTickets(prev => prev + ticketsQuantity);
   };
 
-  // Handler for updating points when a code is redeemed
   const handlePointsUpdate = useCallback((points: number) => {
     setUserPoints(prevPoints => prevPoints + points);
-    setUserCodesSubmitted(prev => prev + 1);
+  }, []);
+
+  const handleTicketsUpdate = useCallback((tickets: number) => {
+    setUserPrestigeTickets(prev => prev + tickets);
   }, []);
   
   const handleLogout = () => {
@@ -109,7 +81,6 @@ const Dashboard: React.FC = () => {
       setActiveTab(tab);
     }
     
-    // Close mobile menu when a navigation option is selected
     setMobileMenuOpen(false);
   };
 
@@ -129,7 +100,6 @@ const Dashboard: React.FC = () => {
     >
       <div className="absolute inset-0 bg-indigo-900/10 backdrop-blur-sm"></div>
       
-      {/* Mobile Header - only visible on mobile */}
       <MobileHeader 
         userName={userName}
         userPoints={userPoints}
@@ -138,7 +108,6 @@ const Dashboard: React.FC = () => {
         logo={centerLogo}
       />
       
-      {/* Left Sidebar - hidden on mobile unless menu is open */}
       <Sidebar 
         userName={userName}
         userPoints={userPoints}
@@ -151,43 +120,36 @@ const Dashboard: React.FC = () => {
         closeMobileMenu={() => setMobileMenuOpen(false)}
       />
 
-      {/* Middle Stats Section - hidden on mobile, shown on desktop */}
-      <div className="hidden md:block">
-        <StatsPanel 
-          userPoints={userPoints}
-          userPrestigeTickets={userPrestigeTickets}
-          isMobileView={false}
-          toggleMobileView={() => {}}
-        />
-      </div>
+      <StatsPanel 
+        userPoints={userPoints}
+        userPrestigeTickets={userPrestigeTickets}
+        isMobileView={mobileStatsOpen}
+        toggleMobileView={toggleMobileStats}
+        onPointsUpdate={handlePointsUpdate}
+        onTicketsUpdate={handleTicketsUpdate}
+      />
 
-      {/* Main Content */}
       <MainContent 
         userName={userName}
         activeTab={activeTab}
         userPoints={userPoints}
         userPrestigeTickets={userPrestigeTickets}
-        userReferrals={userReferrals}
-        userCodesSubmitted={userCodesSubmitted}
         isMobileView={mobileStatsOpen}
         toggleMobileView={toggleMobileStats}
       />
 
-      {/* Mobile Bottom Navigation - only visible on mobile */}
       <MobileNavbar 
         activeTab={activeTab}
         handleNavigation={handleNavigation}
         toggleStats={toggleMobileStats}
       />
 
-      {/* Submit Code Modal */}
       <SubmitCode 
         isOpen={showSubmitCode} 
         onClose={() => setShowSubmitCode(false)}
         onPointsUpdated={handlePointsUpdate}
       />
 
-      {/* Buy Tickets Modal */}
       <BuyTickets 
         isOpen={showBuyTickets} 
         onClose={() => setShowBuyTickets(false)} 
