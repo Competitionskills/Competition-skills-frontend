@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Search, Bell, ChevronRight, Info, Gift } from 'lucide-react';
 import { ActivityRow } from './ActivityRow';
 import { BarChart } from './BarChart';
+import ReferralCard from './ReferralCard';
+import ReferralsList from './ReferralsList';
 
 interface MainContentProps {
   userName: string | null;
@@ -195,75 +197,87 @@ const MainContent: React.FC<MainContentProps> = ({
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-6">
-          <div className="bg-white shadow-lg rounded-xl p-4 md:p-6 border border-indigo-100">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-indigo-800">Monthly Performance</h3>
-              <div className="flex items-center space-x-2 bg-indigo-50 rounded-md px-3 py-1">
-                <span className="text-sm text-indigo-600">Jan 08 - Aug 08</span>
-                <ChevronRight className="h-4 w-4 text-indigo-400" />
-              </div>
-            </div>
-            <div className="h-64">
-              <BarChart />
-            </div>
+        {/* Referral System (show only if activeTab is 'referrals') */}
+        {activeTab === 'referrals' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <ReferralCard />
+            <ReferralsList />
           </div>
+        )}
 
-          <div className="bg-white shadow-lg rounded-xl p-4 md:p-6 border border-indigo-100">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-indigo-800">Recent Activity</h3>
-              <button className="text-sm text-indigo-600 hover:text-indigo-800">View All</button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead>
-                  <tr className="border-b border-indigo-100">
-                    <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Player</th>
-                    <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Activity</th>
-                    <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Details</th>
-                    <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <ActivityRow 
-                    name="Jenny Wilson"
-                    activity="Bought Tickets"
-                    details="5 Prestige Tickets"
-                    time="2m ago"
-                    type="purchase"
-                  />
-                  <ActivityRow 
-                    name="Michael Scott"
-                    activity="Competition"
-                    details="Ranked #1 in Weekly Challenge"
-                    time="5m ago"
-                    type="competition"
-                  />
-                  <ActivityRow 
-                    name="Jim Halpert"
-                    activity="Achievement"
-                    details="Perfect Score Streak"
-                    time="12m ago"
-                    type="achievement"
-                  />
-                  <ActivityRow 
-                    name="Pam Beesly"
-                    activity="Bought Tickets"
-                    details="3 Golden Tickets"
-                    time="15m ago"
-                    type="purchase"
-                  />
-                  <ActivityRow 
-                    name="Dwight Schrute"
-                    activity="Competition"
-                    details="Joined Tournament Alpha"
-                    time="20m ago"
-                    type="competition"
-                  />
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 gap-6">
+          {activeTab !== 'referrals' && (
+            <>
+              <div className="bg-white shadow-lg rounded-xl p-4 md:p-6 border border-indigo-100">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-indigo-800">Monthly Performance</h3>
+                  <div className="flex items-center space-x-2 bg-indigo-50 rounded-md px-3 py-1">
+                    <span className="text-sm text-indigo-600">Jan 08 - Aug 08</span>
+                    <ChevronRight className="h-4 w-4 text-indigo-400" />
+                  </div>
+                </div>
+                <div className="h-64">
+                  <BarChart />
+                </div>
+              </div>
+
+              <div className="bg-white shadow-lg rounded-xl p-4 md:p-6 border border-indigo-100">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-indigo-800">Recent Activity</h3>
+                  <button className="text-sm text-indigo-600 hover:text-indigo-800">View All</button>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="border-b border-indigo-100">
+                        <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Player</th>
+                        <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Activity</th>
+                        <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Details</th>
+                        <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <ActivityRow 
+                        name="Jenny Wilson"
+                        activity="Bought Tickets"
+                        details="5 Prestige Tickets"
+                        time="2m ago"
+                        type="purchase"
+                      />
+                      <ActivityRow 
+                        name="Michael Scott"
+                        activity="Competition"
+                        details="Ranked #1 in Weekly Challenge"
+                        time="5m ago"
+                        type="competition"
+                      />
+                      <ActivityRow 
+                        name="Jim Halpert"
+                        activity="Achievement"
+                        details="Perfect Score Streak"
+                        time="12m ago"
+                        type="achievement"
+                      />
+                      <ActivityRow 
+                        name="Pam Beesly"
+                        activity="Bought Tickets"
+                        details="3 Golden Tickets"
+                        time="15m ago"
+                        type="purchase"
+                      />
+                      <ActivityRow 
+                        name="Dwight Schrute"
+                        activity="Competition"
+                        details="Joined Tournament Alpha"
+                        time="20m ago"
+                        type="competition"
+                      />
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </main>
     </div>
