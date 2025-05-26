@@ -2,73 +2,57 @@ import React, { useState, useEffect } from 'react';
 import { Search, Bell, ChevronRight, Info, Gift } from 'lucide-react';
 import { ActivityRow } from './ActivityRow';
 import { BarChart } from './BarChart';
-import { getDailyLoginStatus, claimDailyReward } from '../../api/userApi';
+import ReferralCard from './ReferralCard';
+import ReferralsList from './ReferralsList';
 
 interface MainContentProps {
   userName: string | null;
   activeTab: string;
-  userPoints?: number;
-  userPrestigeTickets?: number;
-  userReferrals?: number;
-  userCodesSubmitted?: number;
-  isMobileView?: boolean;
-  toggleMobileView?: () => void;
+  userPoints: number;
+  userPrestigeTickets: number;
+  loginStatus: any;
+  updatePoints: (points: number) => void;
+  updatePrestigeTickets: (tickets: number) => void;
+  updateLoginStatus: (status: any) => void;
 }
 
 const MainContent: React.FC<MainContentProps> = ({ 
   userName, 
   activeTab,
-  userPoints = 0,
-  userPrestigeTickets = 0,
-  userReferrals = 8,
-  userCodesSubmitted = 127,
-  isMobileView = false,
-  toggleMobileView = () => {}
+  userPoints,
+  userPrestigeTickets,
+  loginStatus,
+  updatePoints,
+  updatePrestigeTickets,
+  updateLoginStatus
 }) => {
-  const [currentStreak, setCurrentStreak] = useState(0);
-  const [canClaim, setCanClaim] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [nextReward, setNextReward] = useState({ points: 100, prestigeTickets: 0 });
 
   useEffect(() => {
-    const fetchLoginStatus = async () => {
-      try {
-        const status = await getDailyLoginStatus();
-        setCurrentStreak(status.currentStreak);
-        setCanClaim(status.canClaim);
-        
-        // Calculate next reward
-        const nextDay = status.currentStreak + 1;
-        const isDay7 = nextDay % 7 === 0;
-        setNextReward({
-          points: 100,
-          prestigeTickets: isDay7 ? 1 : 0
-        });
-      } catch (error) {
-        console.error('Failed to fetch login status:', error);
-      }
-    };
-
-    fetchLoginStatus();
-  }, []);
+    if (loginStatus) {
+      const nextDay = (loginStatus.currentStreak || 0) + 1;
+      const isDay7 = nextDay % 7 === 0;
+      setNextReward({
+        points: isDay7 ? 500 : 100,
+        prestigeTickets: isDay7 ? 1 : 0
+      });
+    }
+  }, [loginStatus]);
 
   const handleClaimReward = async () => {
-    if (!canClaim || isLoading) return;
-
+    if (loginStatus.claimedToday || isLoading) return;
     setIsLoading(true);
     try {
-      const result = await claimDailyReward();
-      if (result.success) {
-        setCanClaim(false);
-        setCurrentStreak(result.newStreak);
-        
-        // Update next reward after claiming
-        const nextDay = result.newStreak + 1;
-        const isDay7 = nextDay % 7 === 0;
-        setNextReward({
-          points: 100,
-          prestigeTickets: isDay7 ? 1 : 0
-        });
+      const newStatus = {
+        ...loginStatus,
+        currentStreak: loginStatus.currentStreak + 1,
+        claimedToday: true
+      };
+      updateLoginStatus(newStatus);
+      updatePoints(userPoints + nextReward.points);
+      if (nextReward.prestigeTickets > 0) {
+        updatePrestigeTickets(userPrestigeTickets + nextReward.prestigeTickets);
       }
     } catch (error) {
       console.error('Failed to claim reward:', error);
@@ -76,8 +60,6 @@ const MainContent: React.FC<MainContentProps> = ({
       setIsLoading(false);
     }
   };
-
-  const todayInCycle = (currentStreak % 7 === 0 && currentStreak !== 0) ? 7 : currentStreak % 7;
 
   return (
     <div className="flex-1 overflow-auto relative z-10">
@@ -112,12 +94,12 @@ const MainContent: React.FC<MainContentProps> = ({
 
         {/* Mobile Stats Section */}
         <div className="md:hidden mb-6">
-          {(activeTab === 'overview' || isMobileView) && (
+          {activeTab === 'overview' && (
             <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-indigo-100 overflow-hidden">
-              <div className="p-4">
+              <div className="p-6">
                 <h3 className="text-lg font-bold text-indigo-800 mb-4">Overview</h3>
                 
-                <div className="space-y-3 mb-4">
+                <div className="space-y-4">
                   <div className="flex justify-between items-center p-3 bg-gradient-to-r from-indigo-50 to-white rounded-lg">
                     <div>
                       <p className="text-sm text-indigo-500">Total Points</p>
@@ -137,7 +119,7 @@ const MainContent: React.FC<MainContentProps> = ({
                   <div className="flex justify-between items-center p-3 bg-gradient-to-r from-indigo-50 to-white rounded-lg">
                     <div>
                       <p className="text-sm text-indigo-500">Referrals</p>
-                      <p className="text-xl font-bold text-indigo-900">{userReferrals}</p>
+                      <p className="text-xl font-bold text-indigo-900">{loginStatus.currentStreak > 5 ? "8" : "7"}</p>
                     </div>
                     <div className="px-2 py-1 rounded bg-green-100 text-green-600">+21%</div>
                   </div>
@@ -145,7 +127,7 @@ const MainContent: React.FC<MainContentProps> = ({
                   <div className="flex justify-between items-center p-3 bg-gradient-to-r from-indigo-50 to-white rounded-lg">
                     <div>
                       <p className="text-sm text-indigo-500">Codes Submitted</p>
-                      <p className="text-xl font-bold text-indigo-900">{userCodesSubmitted}</p>
+                      <p className="text-xl font-bold text-indigo-900">127</p>
                     </div>
                     <div className="px-2 py-1 rounded bg-green-100 text-green-600">+8%</div>
                   </div>
@@ -161,117 +143,141 @@ const MainContent: React.FC<MainContentProps> = ({
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-7 gap-1">
+                  <div className="grid grid-cols-7 gap-2">
                     {[1, 2, 3, 4, 5, 6, 7].map((day) => (
                       <div 
                         key={day} 
-                        className={`h-8 rounded-md flex items-center justify-center ${
-                          day <= todayInCycle
+                        className={`h-10 rounded-lg flex items-center justify-center relative ${
+                          day <= loginStatus.currentStreak 
                             ? 'bg-gradient-to-br from-green-100 to-green-200 border border-green-300 text-green-700' 
-                            : 'bg-gray-100 border border-gray-200 text-gray-400'
+                            : day === loginStatus.currentStreak + 1 && !loginStatus.claimedToday
+                              ? 'bg-gradient-to-br from-indigo-100 to-indigo-200 border border-indigo-300 text-indigo-700 animate-pulse'
+                              : 'bg-gray-100 border border-gray-200 text-gray-400'
                         }`}
                       >
                         {day}
+                        {day <= loginStatus.currentStreak && (
+                          <div className="absolute -top-1 -right-1 h-3 w-3 bg-green-500 rounded-full border border-white"></div>
+                        )}
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="mt-4 p-3 bg-indigo-50 rounded-lg">
-                  <div className="flex items-center gap-2 text-indigo-600">
-                    <div className="p-1 bg-indigo-100 rounded">
-                      <Gift className="h-4 w-4" />
-                    </div>
-                    <span className="text-sm font-medium">Next Reward:</span>
+                <div className="mt-4 p-3 bg-indigo-100 rounded-lg border border-indigo-200">
+                  <div className="flex items-center space-x-2">
+                    <Gift className="h-5 w-5 text-indigo-600" />
+                    <p className="text-sm text-indigo-700 font-medium">Day 7 Reward:</p>
                   </div>
-                  <p className="mt-1 text-sm text-indigo-700 font-semibold">
-                    {nextReward.points} points
-                    {nextReward.prestigeTickets > 0 && ` + ${nextReward.prestigeTickets} Prestige ticket`}
-                  </p>
+                  <p className="text-sm text-indigo-900 mt-1 pl-7">500 points + 1 Prestige Ticket</p>
                 </div>
                 
                 <button 
                   onClick={handleClaimReward}
-                  disabled={!canClaim || isLoading}
-                  className={`w-full mt-4 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white py-2 px-4 rounded-lg font-medium text-sm
-                    ${(!canClaim || isLoading) ? 'opacity-50 cursor-not-allowed' : 'hover:from-indigo-500 hover:to-indigo-400'}`}
+                  disabled={loginStatus.claimedToday || isLoading}
+                  className={`w-full mt-4 py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all duration-200 ${
+                    loginStatus.claimedToday 
+                      ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                      : isLoading
+                        ? 'bg-indigo-400 text-white cursor-wait'
+                        : 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white hover:from-indigo-500 hover:to-indigo-400'
+                  }`}
                 >
-                  {isLoading ? 'Claiming...' : canClaim ? 'Claim Daily Reward' : 'Already Claimed'}
+                  <Gift className={`h-5 w-5 ${isLoading ? 'animate-pulse' : ''}`} />
+                  <span>
+                    {loginStatus.claimedToday 
+                      ? 'Already Claimed Today' 
+                      : isLoading 
+                        ? 'Claiming...' 
+                        : 'Claim Daily Reward'}
+                  </span>
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-6">
-          <div className="bg-white shadow-lg rounded-xl p-4 md:p-6 border border-indigo-100">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-indigo-800">Monthly Performance</h3>
-              <div className="flex items-center space-x-2 bg-indigo-50 rounded-md px-3 py-1">
-                <span className="text-sm text-indigo-600">Jan 08 - Aug 08</span>
-                <ChevronRight className="h-4 w-4 text-indigo-400" />
-              </div>
-            </div>
-            <div className="h-64">
-              <BarChart />
-            </div>
+        {/* Referral System (show only if activeTab is 'referrals') */}
+        {activeTab === 'referrals' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <ReferralCard />
+            <ReferralsList />
           </div>
+        )}
 
-          <div className="bg-white shadow-lg rounded-xl p-4 md:p-6 border border-indigo-100">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-indigo-800">Recent Activity</h3>
-              <button className="text-sm text-indigo-600 hover:text-indigo-800">View All</button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead>
-                  <tr className="border-b border-indigo-100">
-                    <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Player</th>
-                    <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Activity</th>
-                    <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Details</th>
-                    <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <ActivityRow 
-                    name="Jenny Wilson"
-                    activity="Bought Tickets"
-                    details="5 Prestige Tickets"
-                    time="2m ago"
-                    type="purchase"
-                  />
-                  <ActivityRow 
-                    name="Michael Scott"
-                    activity="Competition"
-                    details="Ranked #1 in Weekly Challenge"
-                    time="5m ago"
-                    type="competition"
-                  />
-                  <ActivityRow 
-                    name="Jim Halpert"
-                    activity="Achievement"
-                    details="Perfect Score Streak"
-                    time="12m ago"
-                    type="achievement"
-                  />
-                  <ActivityRow 
-                    name="Pam Beesly"
-                    activity="Bought Tickets"
-                    details="3 Golden Tickets"
-                    time="15m ago"
-                    type="purchase"
-                  />
-                  <ActivityRow 
-                    name="Dwight Schrute"
-                    activity="Competition"
-                    details="Joined Tournament Alpha"
-                    time="20m ago"
-                    type="competition"
-                  />
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 gap-6">
+          {activeTab !== 'referrals' && (
+            <>
+              <div className="bg-white shadow-lg rounded-xl p-4 md:p-6 border border-indigo-100">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-indigo-800">Monthly Performance</h3>
+                  <div className="flex items-center space-x-2 bg-indigo-50 rounded-md px-3 py-1">
+                    <span className="text-sm text-indigo-600">Jan 08 - Aug 08</span>
+                    <ChevronRight className="h-4 w-4 text-indigo-400" />
+                  </div>
+                </div>
+                <div className="h-64">
+                  <BarChart />
+                </div>
+              </div>
+
+              <div className="bg-white shadow-lg rounded-xl p-4 md:p-6 border border-indigo-100">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-indigo-800">Recent Activity</h3>
+                  <button className="text-sm text-indigo-600 hover:text-indigo-800">View All</button>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="border-b border-indigo-100">
+                        <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Player</th>
+                        <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Activity</th>
+                        <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Details</th>
+                        <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <ActivityRow 
+                        name="Jenny Wilson"
+                        activity="Bought Tickets"
+                        details="5 Prestige Tickets"
+                        time="2m ago"
+                        type="purchase"
+                      />
+                      <ActivityRow 
+                        name="Michael Scott"
+                        activity="Competition"
+                        details="Ranked #1 in Weekly Challenge"
+                        time="5m ago"
+                        type="competition"
+                      />
+                      <ActivityRow 
+                        name="Jim Halpert"
+                        activity="Achievement"
+                        details="Perfect Score Streak"
+                        time="12m ago"
+                        type="achievement"
+                      />
+                      <ActivityRow 
+                        name="Pam Beesly"
+                        activity="Bought Tickets"
+                        details="3 Golden Tickets"
+                        time="15m ago"
+                        type="purchase"
+                      />
+                      <ActivityRow 
+                        name="Dwight Schrute"
+                        activity="Competition"
+                        details="Joined Tournament Alpha"
+                        time="20m ago"
+                        type="competition"
+                      />
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </main>
     </div>

@@ -10,12 +10,12 @@ export const buyPrestigeTicket = async () => {
   return response.data;
 };
 
-export const getDailyLoginStatus = async () => {
-  const response = await api.get("/users/daily-login/status");
+export const claimDailyReward = async () => {
+  const response = await api.post("/users/claim-daily-reward");
   return response.data;
 };
 
-export const claimDailyReward = async () => {
-  const response = await api.post("/users/daily-login/claim");
+export const getDailyLoginStatus = async () => {
+  const response = await api.get("/users/daily-login-status");
   return response.data;
 };
