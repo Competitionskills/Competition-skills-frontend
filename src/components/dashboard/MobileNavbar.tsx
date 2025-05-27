@@ -44,7 +44,6 @@ const MobileNavbar: React.FC<MobileNavbarProps> = ({
           label="Stats"
           active={false}
           onClick={toggleStats}
-          badge="New"
         />
       </div>
     </div>
@@ -56,16 +55,15 @@ interface NavButtonProps {
   label: string;
   active: boolean;
   onClick: () => void;
-  badge?: string;
 }
 
-const NavButton: React.FC<NavButtonProps> = ({ icon, label, active, onClick, badge }) => {
+const NavButton: React.FC<NavButtonProps> = ({ icon, label, active, onClick }) => {
   return (
     <button 
       onClick={onClick}
       className={`flex flex-col items-center justify-center w-16 py-1 rounded-lg ${
         active ? 'text-indigo-600' : 'text-gray-500'
-      } relative`}
+      }`}
     >
       <div className={`${active ? 'text-indigo-600' : 'text-gray-500'}`}>
         {icon}
@@ -73,11 +71,6 @@ const NavButton: React.FC<NavButtonProps> = ({ icon, label, active, onClick, bad
       <span className="text-xs mt-1">{label}</span>
       {active && (
         <div className="h-1 w-4 bg-indigo-600 rounded-full mt-1"></div>
-      )}
-      {badge && (
-        <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-          {badge}
-        </span>
       )}
     </button>
   );
