@@ -85,6 +85,12 @@ const Dashboard: React.FC = () => {
   const handlePointsUpdate = useCallback((points: number) => {
     setUserPoints(prevPoints => prevPoints + points);
   }, []);
+
+  // Handler for daily login rewards
+  const handleDailyRewardClaimed = useCallback((points: number, prestigeTickets: number) => {
+    setUserPoints(prevPoints => prevPoints + points);
+    setUserPrestigeTickets(prevTickets => prevTickets + prestigeTickets);
+  }, []);
   
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -151,6 +157,7 @@ const Dashboard: React.FC = () => {
         userPrestigeTickets={userPrestigeTickets}
         isMobileView={mobileStatsOpen}
         toggleMobileView={toggleMobileStats}
+        onRewardClaimed={handleDailyRewardClaimed}
       />
 
       {/* Main Content */}
