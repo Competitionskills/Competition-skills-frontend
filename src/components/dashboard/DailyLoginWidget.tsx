@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Gift, Star, Crown, Check, Clock } from 'lucide-react';
-import { claimDailyReward, DailyLoginResponse } from '../../api/dailyLoginApi';
+
 import { useUser } from '../../context/userContext';
+import { claimDailyReward } from '../../api/dailyLoginApi';
+import { DailyLoginResponse } from '../../api/dailyLoginApi';
 
 interface DailyLoginWidgetProps {
   userPoints: number;
@@ -14,7 +16,8 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({
   userPrestigeTickets, 
   onRewardClaimed 
 }) => {
-  const { refreshUser } = useUser();
+  const { refreshUser, user } = useUser();
+
   const [currentStreak, setCurrentStreak] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [lastClaimTime, setLastClaimTime] = useState<number | null>(null);
@@ -26,6 +29,7 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({
   const prestigeDay = 7;
 
   useEffect(() => {
+
     // Check if user has already claimed today
     const lastClaim = localStorage.getItem('lastDailyLogin');
     const streak = localStorage.getItem('dailyLoginStreak');
@@ -35,51 +39,69 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({
       const today = new Date();
       const diffTime = today.getTime() - lastClaimDate.getTime();
       const diffMinutes = Math.floor(diffTime / (1000 * 60));
+
+      
       
       setLastClaimTime(parseInt(lastClaim));
       setCanClaim(diffMinutes >= 1440); // 24 hours = 1440 minutes
     }
     
+
     if (streak) {
       setCurrentStreak(parseInt(streak));
     }
   }, []);
 
   const handleClaimReward = async () => {
-    if (!canClaim || isLoading) return;
+    if (!user || !user._id) {
+      console.error('[❌ Missing User] Cannot claim reward without user ID');
+      return;
+    }
+    if (!canClaim || isLoading) {
+      console.warn('[⛔ Claim Blocked] canClaim:', canClaim, '| isLoading:', isLoading);
+      return;
+    }
 
+    
+
+    console.log('[⚡ Attempting to Claim Reward]', { userId: user.id });
     setIsLoading(true);
     try {
       const response: DailyLoginResponse = await claimDailyReward();
-      
-      // Update local state
+      console.log('[✅ API Response]', response);
+
+
       setCurrentStreak(response.streak);
       setLastClaimTime(Date.now());
       setCanClaim(false);
       setRewardMessage(response.message);
       setShowSuccess(true);
 
-      // Store in localStorage
       localStorage.setItem('lastDailyLogin', Date.now().toString());
       localStorage.setItem('dailyLoginStreak', response.streak.toString());
+      console.log('[💾 Updated localStorage]', {
+        lastDailyLogin: Date.now(),
+        dailyLoginStreak: response.streak,
+      });
 
-      // Refresh user data
       await refreshUser();
+      console.log('[🔁 User Refreshed]');
 
-      // Notify parent component
+
       if (onRewardClaimed) {
         const pointsEarned = rewards[Math.min(response.streak, 7)];
         const prestigeEarned = response.streak === prestigeDay ? 1 : 0;
         onRewardClaimed(pointsEarned, prestigeEarned);
       }
 
-      // Hide success message after 3 seconds
+
       setTimeout(() => {
         setShowSuccess(false);
       }, 3000);
 
     } catch (error) {
-      console.error("Error claiming daily reward:", error);
+      console.error('[❌ Error Claiming Reward]', error);
+
     } finally {
       setIsLoading(false);
     }
@@ -91,17 +113,23 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({
   };
 
   const getTimeUntilNextClaim = () => {
-    if (!lastClaimTime) return null;
-    
-    const nextClaimTime = lastClaimTime + (24 * 60 * 60 * 1000); // 24 hours
+
+    if (!lastClaimTime) {
+      return null;
+    }
+
+    const nextClaimTime = lastClaimTime + (24 * 60 * 60 * 1000);
     const now = Date.now();
     const diff = nextClaimTime - now;
-    
-    if (diff <= 0) return null;
-    
+
+    if (diff <= 0) {
+      return null;
+    }
+
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
+
+
     return `${hours}h ${minutes}m`;
   };
 
@@ -130,7 +158,7 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({
           </div>
         )}
 
-        {/* Progress Grid */}
+
         <div className="grid grid-cols-7 gap-2 mb-6">
           {[1, 2, 3, 4, 5, 6, 7].map((day) => (
             <div 
@@ -154,7 +182,7 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({
           ))}
         </div>
 
-        {/* Reward Info */}
+
         <div className="bg-indigo-50 rounded-lg p-4 mb-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-indigo-700">
@@ -167,7 +195,7 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({
               </span>
             </div>
           </div>
-          
+
           {(canClaim ? currentStreak + 1 : currentStreak + 2) === 7 && (
             <div className="flex items-center space-x-2 text-sm text-purple-700">
               <Crown className="h-4 w-4" />
@@ -176,7 +204,7 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({
           )}
         </div>
 
-        {/* Day 7 Special Reward */}
+
         <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 mb-4 border border-purple-200">
           <div className="flex items-center space-x-2 mb-1">
             <Crown className="h-5 w-5 text-purple-600" />
@@ -185,7 +213,7 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({
           <p className="text-sm text-purple-900 font-medium">100 points + 1 Prestige Ticket</p>
         </div>
 
-        {/* Claim Button */}
+
         <button
           onClick={handleClaimReward}
           disabled={!canClaim || isLoading}
@@ -215,7 +243,6 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({
           )}
         </button>
 
-        {/* Streak Info */}
         <div className="mt-4 text-center">
           <p className="text-xs text-gray-500">
             Current streak: <span className="font-semibold text-indigo-600">{currentStreak} day{currentStreak !== 1 ? 's' : ''}</span>
@@ -230,3 +257,4 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({
 };
 
 export default DailyLoginWidget;
+
