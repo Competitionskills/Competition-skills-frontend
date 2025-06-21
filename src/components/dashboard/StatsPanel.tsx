@@ -2,6 +2,7 @@ import React from 'react';
 import { Calendar, Gift, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { StatItem } from './StatItem';
 import DailyLoginWidget from './DailyLoginWidget';
+
 interface StatsPanelProps {
   userPoints: number;
   userPrestigeTickets: number;

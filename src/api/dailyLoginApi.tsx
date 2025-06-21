@@ -1,11 +1,14 @@
 import api from "../helpers/axios";
 
 export interface DailyLoginResponse {
+
   success: boolean;
+
   message: string;
   streak: number;
   totalPoints: number;
   totalPrestigeTickets: number;
+
   reward: {
     points: number;
     prestigeTickets: number;
