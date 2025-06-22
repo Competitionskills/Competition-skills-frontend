@@ -24,16 +24,23 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isUserLoading, setIsUserLoading] = useState<boolean>(true);
 
-  const refreshUser = async () => {
-    try {
-      setIsUserLoading(true);
-      const userData = await fetchUserProfile(); // ✅ Use your helper
-      setUser({ ...userData, id: (userData as any)._id });
-    } catch (error) {
-    } finally {
-      setIsUserLoading(false);
-    }
-  };
+ const refreshUser = async () => {
+  try {
+    setIsUserLoading(true);
+    const userData = await fetchUserProfile();
+    const normalizedUser = {
+      ...userData,
+      id: userData._id || userData.id,
+    };
+    setUser(normalizedUser);
+  } catch (error) {
+    console.error("❌ Failed to load user:", error);
+    setUser(null); // fallback
+  } finally {
+    setIsUserLoading(false);
+  }
+};
+
 
   useEffect(() => {
     refreshUser();
