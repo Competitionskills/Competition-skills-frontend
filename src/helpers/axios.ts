@@ -2,6 +2,7 @@ import axios from "axios";
 
 // ✅ Base API URL from .env file
 const API_BASE_URL = "https://api.scoreperks.co.uk/api" ;
+
 console.log("✅ Axios Base URL:", API_BASE_URL);
 
 // ✅ Create an Axios instance
