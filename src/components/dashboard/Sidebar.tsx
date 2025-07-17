@@ -7,11 +7,10 @@ import {
   Settings, 
   LogOut, 
   Home, 
-  Activity,
+  Users,
   X,
   Star,
   Crown,
-  Users
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -152,11 +151,11 @@ const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => handleNavigation('leaderboard')} 
           />
           <NavItem 
-            icon={<Activity />} 
-            text="Activity" 
-            id="activity" 
-            active={activeTab === 'activity'} 
-            onClick={() => handleNavigation('activity')} 
+            icon={<Users />} 
+            text="Referrals" 
+            id="referrals" 
+            active={activeTab === 'referrals'} 
+            onClick={() => handleNavigation('referrals')} 
           />
           <NavItem 
             icon={<Settings />} 
