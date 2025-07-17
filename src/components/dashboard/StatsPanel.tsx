@@ -2,12 +2,18 @@ import React from 'react';
 import { Calendar, Gift, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { StatItem } from './StatItem';
 import DailyLoginWidget from './DailyLoginWidget';
+import { DailyLoginStatus } from '../../types/user';
 
 interface StatsPanelProps {
   userPoints: number;
   userPrestigeTickets: number;
   isMobileView: boolean;
   toggleMobileView: () => void;
+  loginStatus: DailyLoginStatus;
+  updatePoints: (points: number) => void;
+  updatePrestigeTickets: (tickets: number) => void;
+  updateLoginStatus: (status: DailyLoginStatus) => void;
+  className?: string;
   onRewardClaimed?: (points: number, prestigeTickets: number) => void;
 }
 
