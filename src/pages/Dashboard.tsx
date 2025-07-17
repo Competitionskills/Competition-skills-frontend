@@ -33,7 +33,9 @@ import StatsPanel from '../components/dashboard/StatsPanel';
 import MainContent from '../components/dashboard/MainContent';
 import MobileHeader from '../components/dashboard/MobileHeader';
 import MobileNavbar from '../components/dashboard/MobileNavbar';
-import { fetchUserProfile } from '../api/userApi';
+import RewardNotification from '../components/dashboard/RewardNotification';
+import { fetchUserProfile, getDailyLoginStatus } from '../api/userApi';
+import { DailyLoginStatus } from '../types/user';
 
 // Import background and logo images
 import centerLogo from "../images/dashboard1-logo.jpg";
@@ -51,29 +53,53 @@ const Dashboard: React.FC = () => {
   const [userPoints, setUserPoints] = useState<number>(0);  
   const [userTickets, setUserTickets] = useState<number>(0);
   const [userPrestigeTickets, setUserPrestigeTickets] = useState<number>(0);
+  
+  // Daily login state
+  const [loginStatus, setLoginStatus] = useState<DailyLoginStatus>({
+    currentStreak: 0,
+    lastClaimDate: '',
+    claimedToday: false,
+    daysUntilPrestigeTicket: 7
+  });
+  
+  // Reward notification state
+  const [rewardNotification, setRewardNotification] = useState({
+    visible: false,
+    points: 0,
+    prestigeTickets: 0
+  });
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
-      setAuthToken(token);
-    } else {
+    if (!token) {
       navigate('/login');
+      return;
     }
+
+    setAuthToken(token);
   
-    const getUser = async () => {
+    const fetchData = async () => {
       try {
-        const data = await fetchUserProfile();
-        setUserName(data.username);
-        setUserPoints(data.points);
-        setUserTickets(data.tickets);  
-        setUserPrestigeTickets(data.prestigeTickets);  
+        // Fetch user profile data
+        const userData = await fetchUserProfile();
+        setUserName(userData.username);
+        setUserPoints(userData.points);
+        setUserTickets(userData.tickets);  
+        setUserPrestigeTickets(userData.prestigeTickets);
+        
+        // Fetch daily login status
+        const loginData = await getDailyLoginStatus();
+        setLoginStatus(loginData);
       } catch (error) {
-        console.error("Error fetching user profile:", error);
-        navigate('/login');
+        console.error("Error fetching user data:", error);
+        
+        if (error instanceof Error && error.message === "Unauthorized") {
+          navigate('/login');
+        }
       }
     };
   
-    getUser();
+    fetchData();
   }, [navigate]);
 
   const handleTicketPurchase = (pointsSpent: number, ticketsQuantity: number) => {
@@ -92,8 +118,26 @@ const Dashboard: React.FC = () => {
     setUserPrestigeTickets(prevTickets => prevTickets + prestigeTickets);
   }, []);
   
+  const handleLoginStatusUpdate = useCallback((newStatus: DailyLoginStatus) => {
+    setLoginStatus(newStatus);
+  }, []);
+  
+  const updatePrestigeTickets = useCallback((tickets: number) => {
+    setUserPrestigeTickets(prev => prev + tickets);
+    
+    // Show reward notification
+    setRewardNotification({
+      visible: true,
+      points: tickets === 0 ? 100 : 500, // Regular day or day 7
+      prestigeTickets: tickets
+    });
+  }, []);
+  
+  const closeRewardNotification = () => {
+    setRewardNotification(prev => ({ ...prev, visible: false }));
+  };
+  
   const handleLogout = () => {
-    localStorage.removeItem("token");
     setAuthToken(null);
     navigate("/login");
   };
@@ -157,13 +201,23 @@ const Dashboard: React.FC = () => {
         userPrestigeTickets={userPrestigeTickets}
         isMobileView={mobileStatsOpen}
         toggleMobileView={toggleMobileStats}
-        onRewardClaimed={handleDailyRewardClaimed}
+        loginStatus={loginStatus}
+        updatePoints={handlePointsUpdate}
+        updatePrestigeTickets={updatePrestigeTickets}
+        updateLoginStatus={handleLoginStatusUpdate}
+
       />
 
       {/* Main Content */}
       <MainContent 
         userName={userName}
         activeTab={activeTab}
+        userPoints={userPoints}
+        userPrestigeTickets={userPrestigeTickets}
+        loginStatus={loginStatus}
+        updatePoints={handlePointsUpdate}
+        updatePrestigeTickets={updatePrestigeTickets}
+        updateLoginStatus={handleLoginStatusUpdate}
       />
 
       {/* Mobile Bottom Navigation - only visible on mobile */}
@@ -186,6 +240,14 @@ const Dashboard: React.FC = () => {
         onClose={() => setShowBuyTickets(false)} 
         userPoints={userPoints}
         onPurchase={handleTicketPurchase}
+      />
+      
+      {/* Reward Notification */}
+      <RewardNotification
+        isVisible={rewardNotification.visible}
+        onClose={closeRewardNotification}
+        rewardPoints={rewardNotification.points}
+        prestigeTickets={rewardNotification.prestigeTickets}
       />
     </div>
   );
