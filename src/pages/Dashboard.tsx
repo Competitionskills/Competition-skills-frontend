@@ -111,6 +111,12 @@ const Dashboard: React.FC = () => {
   const handlePointsUpdate = useCallback((points: number) => {
     setUserPoints(prevPoints => prevPoints + points);
   }, []);
+
+  // Handler for daily login rewards
+  const handleDailyRewardClaimed = useCallback((points: number, prestigeTickets: number) => {
+    setUserPoints(prevPoints => prevPoints + points);
+    setUserPrestigeTickets(prevTickets => prevTickets + prestigeTickets);
+  }, []);
   
   const handleLoginStatusUpdate = useCallback((newStatus: DailyLoginStatus) => {
     setLoginStatus(newStatus);
@@ -199,6 +205,7 @@ const Dashboard: React.FC = () => {
         updatePoints={handlePointsUpdate}
         updatePrestigeTickets={updatePrestigeTickets}
         updateLoginStatus={handleLoginStatusUpdate}
+
       />
 
       {/* Main Content */}

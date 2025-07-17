@@ -1,7 +1,10 @@
 import axios from "axios";
 
-// Base API URL from .env file
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
+// ✅ Base API URL from .env file
+const API_BASE_URL = "https://api.scoreperks.co.uk/api" ;
+
+console.log("✅ Axios Base URL:", API_BASE_URL);
 
 // Create an Axios instance
 export const api = axios.create({
