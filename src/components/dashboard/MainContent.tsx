@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Search, Bell, ChevronRight, Info, Gift } from 'lucide-react';
 import { ActivityRow } from './ActivityRow';
 import { BarChart } from './BarChart';
-import ReferralCard from './ReferralCard';
-import ReferralsList from './ReferralsList';
 import { DailyLoginStatus } from '../../types/user';
 
 interface MainContentProps {
@@ -177,13 +175,7 @@ const MainContent: React.FC<MainContentProps> = ({
           )}
         </div>
 
-        {/* Referral System */}
-        {activeTab === 'referrals' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <ReferralCard />
-            <ReferralsList userPoints={userPoints} userPrestigeTickets={userPrestigeTickets} />
-          </div>
-        )}
+        
 
         {/* Graph and Activity */}
         <div className="grid grid-cols-1 gap-6">
