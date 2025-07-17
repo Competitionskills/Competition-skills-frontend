@@ -10,7 +10,8 @@ import {
   Activity,
   X,
   Star,
-  Crown
+  Crown,
+  Users
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -135,6 +136,13 @@ const Sidebar: React.FC<SidebarProps> = ({
             id="submit-code" 
             active={activeTab === 'submit-code'} 
             onClick={() => handleNavigation('submit-code')} 
+          />
+          <NavItem 
+            icon={<Users />} 
+            text="Referrals" 
+            id="referrals" 
+            active={activeTab === 'referrals'} 
+            onClick={() => handleNavigation('referrals')} 
           />
           <NavItem 
             icon={<Trophy />} 

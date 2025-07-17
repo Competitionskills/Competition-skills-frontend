@@ -28,6 +28,7 @@ import {
 
 import SubmitCode from '../components/submitCode';
 import BuyTickets from '../components/BuyTickets';
+import ReferralProgram from '../components/ReferralProgram';
 import Sidebar from '../components/dashboard/Sidebar';
 import StatsPanel from '../components/dashboard/StatsPanel';
 import MainContent from '../components/dashboard/MainContent';
@@ -44,6 +45,7 @@ const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [showSubmitCode, setShowSubmitCode] = useState<boolean>(false);
   const [showBuyTickets, setShowBuyTickets] = useState<boolean>(false);
+  const [showReferrals, setShowReferrals] = useState<boolean>(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [mobileStatsOpen, setMobileStatsOpen] = useState<boolean>(false);
@@ -105,6 +107,8 @@ const Dashboard: React.FC = () => {
       setShowBuyTickets(true);
     } else if (tab === 'submit-code') {
       setShowSubmitCode(true);
+    } else if (tab === 'referrals') {
+      setShowReferrals(true);
     } else {
       setActiveTab(tab);
     }
@@ -186,6 +190,12 @@ const Dashboard: React.FC = () => {
         onClose={() => setShowBuyTickets(false)} 
         userPoints={userPoints}
         onPurchase={handleTicketPurchase}
+      />
+
+      {/* Referral Program Modal */}
+      <ReferralProgram 
+        isOpen={showReferrals} 
+        onClose={() => setShowReferrals(false)} 
       />
     </div>
   );
