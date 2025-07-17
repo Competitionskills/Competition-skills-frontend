@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Trophy, Ticket, Code, PieChart } from 'lucide-react';
+import { Home, Trophy, Calendar, Users, Menu } from 'lucide-react';
 
 interface MobileNavbarProps {
   activeTab: string;
@@ -7,72 +7,56 @@ interface MobileNavbarProps {
   toggleStats: () => void;
 }
 
-const MobileNavbar: React.FC<MobileNavbarProps> = ({
-  activeTab,
+const MobileNavbar: React.FC<MobileNavbarProps> = ({ 
+  activeTab, 
   handleNavigation,
   toggleStats
 }) => {
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-indigo-100 z-20">
-      <div className="flex justify-around items-center px-2 py-2">
-        <NavButton 
-          icon={<Home className="h-5 w-5" />} 
-          label="Home"
-          active={activeTab === 'overview'}
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-indigo-100 z-30">
+      <div className="grid grid-cols-5 py-2">
+        <button
           onClick={() => handleNavigation('overview')}
-        />
-        <NavButton 
-          icon={<Trophy className="h-5 w-5" />} 
-          label="Leaderboard"
-          active={activeTab === 'leaderboard'}
-          onClick={() => handleNavigation('leaderboard')}
-        />
-        <NavButton 
-          icon={<Ticket className="h-5 w-5" />} 
-          label="Tickets"
-          active={activeTab === 'buy-tickets'}
-          onClick={() => handleNavigation('buy-tickets')}
-        />
-        <NavButton 
-          icon={<Code className="h-5 w-5" />} 
-          label="Submit"
-          active={activeTab === 'submit-code'}
-          onClick={() => handleNavigation('submit-code')}
-        />
-        <NavButton 
-          icon={<PieChart className="h-5 w-5" />} 
-          label="Stats"
-          active={false}
+          className="flex flex-col items-center justify-center"
+        >
+          <Home className={`h-5 w-5 ${activeTab === 'overview' ? 'text-indigo-600' : 'text-indigo-400'}`} />
+          <span className={`text-xs mt-1 ${activeTab === 'overview' ? 'text-indigo-600' : 'text-indigo-400'}`}>Home</span>
+        </button>
+        
+        <button
+          onClick={() => handleNavigation('competitions')}
+          className="flex flex-col items-center justify-center"
+        >
+          <Trophy className={`h-5 w-5 ${activeTab === 'competitions' ? 'text-indigo-600' : 'text-indigo-400'}`} />
+          <span className={`text-xs mt-1 ${activeTab === 'competitions' ? 'text-indigo-600' : 'text-indigo-400'}`}>Compete</span>
+        </button>
+        
+        <button
+          onClick={() => handleNavigation('events')}
+          className="flex flex-col items-center justify-center"
+        >
+          <Calendar className={`h-5 w-5 ${activeTab === 'events' ? 'text-indigo-600' : 'text-indigo-400'}`} />
+          <span className={`text-xs mt-1 ${activeTab === 'events' ? 'text-indigo-600' : 'text-indigo-400'}`}>Events</span>
+        </button>
+        
+        <button
+          onClick={() => handleNavigation('referrals')}
+          className="flex flex-col items-center justify-center relative"
+        >
+          <Users className={`h-5 w-5 ${activeTab === 'referrals' ? 'text-indigo-600' : 'text-indigo-400'}`} />
+          <span className={`text-xs mt-1 ${activeTab === 'referrals' ? 'text-indigo-600' : 'text-indigo-400'}`}>Referrals</span>
+          <span className="absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] px-1 rounded-full">New</span>
+        </button>
+        
+        <button
           onClick={toggleStats}
-        />
+          className="flex flex-col items-center justify-center"
+        >
+          <Menu className="h-5 w-5 text-indigo-400" />
+          <span className="text-xs mt-1 text-indigo-400">More</span>
+        </button>
       </div>
     </div>
-  );
-};
-
-interface NavButtonProps {
-  icon: React.ReactNode;
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}
-
-const NavButton: React.FC<NavButtonProps> = ({ icon, label, active, onClick }) => {
-  return (
-    <button 
-      onClick={onClick}
-      className={`flex flex-col items-center justify-center w-16 py-1 rounded-lg ${
-        active ? 'text-indigo-600' : 'text-gray-500'
-      }`}
-    >
-      <div className={`${active ? 'text-indigo-600' : 'text-gray-500'}`}>
-        {icon}
-      </div>
-      <span className="text-xs mt-1">{label}</span>
-      {active && (
-        <div className="h-1 w-4 bg-indigo-600 rounded-full mt-1"></div>
-      )}
-    </button>
   );
 };
 
