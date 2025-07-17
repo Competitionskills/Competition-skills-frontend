@@ -3,14 +3,14 @@ import {
   Trophy, 
   Award, 
   Ticket,
-  Calendar, 
   Code, 
   Settings, 
   LogOut, 
   Home, 
-  Users,
+  Activity,
   X,
-  BadgeCheck, // for Achievements icon
+  Star,
+  Crown
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -25,129 +25,178 @@ interface SidebarProps {
   closeMobileMenu: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-  userName, 
-  userPoints, 
+const Sidebar: React.FC<SidebarProps> = ({
+  userName,
+  userPoints,
   userPrestigeTickets,
-  activeTab, 
-  centerLogo, 
-  handleNavigation, 
+  activeTab,
+  centerLogo,
+  handleNavigation,
   handleLogout,
   isMobile,
   closeMobileMenu
 }) => {
-  const menuItems = [
-    { id: 'overview', icon: Home, label: 'Overview' },
-    { id: 'achievements', icon: BadgeCheck, label: 'Achievements', comingSoon: true },
-    { id: 'referrals', icon: Users, label: 'Referrals' },
-    { id: 'leaderboard', icon: Trophy, label: 'Leaderboard' },
-    { id: 'submit-code', icon: Code, label: 'Submit Code' },
-    { id: 'buy-tickets', icon: Ticket, label: 'Buy Tickets' },
-  ];
-
   return (
-    <aside className={`
-      w-80 bg-gradient-to-b from-indigo-700 to-indigo-600 text-white h-screen
-      flex flex-col z-20 transition-all duration-300 ease-in-out
-      ${isMobile ? 'fixed inset-y-0 left-0' : 'hidden md:flex'}
+    <div className={`
+      ${isMobile ? 'fixed inset-0 z-50 transform transition-transform duration-300 ease-in-out' : 'hidden md:block'}
+      w-full md:w-80 bg-gradient-to-b from-indigo-700 to-indigo-600 text-white relative z-10
     `}>
+      {/* Close button for mobile only */}
       {isMobile && (
         <button 
           onClick={closeMobileMenu}
-          className="absolute top-4 right-4 p-1 text-white hover:text-indigo-200 md:hidden"
+          className="absolute top-4 right-4 p-2 rounded-full bg-indigo-800 text-white"
         >
           <X className="h-6 w-6" />
         </button>
       )}
+      
+      {/* Logo Section */}
+      <div className="p-5">
+        <a
+          href="https://www.scoreperks.co.uk/home"
+          target="_self"
+          rel="noopener noreferrer"
+        >
+          <img 
+            src={centerLogo} 
+            alt="ScorePerk Logo" 
+            className="h-12 w-auto mx-auto rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity duration-200" 
+          />
+        </a>
+      </div>
 
-      {/* Logo */}
-      <div className="p-4 border-b border-indigo-500 flex items-center justify-center">
-        <img src={centerLogo} alt="Logo" className="h-10" />
+      {/* Profile Section */}
+      <div className="px-4 py-4">
+        <div className="flex flex-col p-4 bg-indigo-500/30 rounded-xl mb-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-2">
+            <Crown className="h-5 w-5 text-yellow-300 animate-pulse" />
+          </div>
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="h-12 w-12 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold ring-2 ring-white/50">
+              {userName ? userName.substring(0, 2).toUpperCase() : "??"}
+            </div>
+            <div>
+              <p className="font-medium text-base">{userName || "Loading..."}</p>
+              <div className="flex items-center space-x-1">
+                <Star className="h-4 w-4 text-yellow-300" />
+                <p className="text-sm text-indigo-300">Points: {userPoints}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-indigo-600/50 rounded-lg p-3">
+            <div className="flex justify-between text-sm mb-2">
+              <div>
+                <p className="text-indigo-200">Points</p>
+                <p className="font-semibold">{userPoints.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-indigo-200">Tickets</p>
+                <p className="font-semibold">{userPrestigeTickets}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       
-      {/* User Info */}
-      <div className="p-4 border-b border-indigo-500">
-        <div className="flex items-center mb-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-400 to-indigo-400 flex items-center justify-center text-white font-bold">
-            {userName ? userName.substring(0, 2).toUpperCase() : "??"}
+      {/* Navigation */}
+      <div className="flex-1 px-4 overflow-y-auto">
+        <p className="text-xs font-semibold text-indigo-200 uppercase tracking-wider px-3 mb-2">Main Menu</p>
+        <nav className="space-y-1">
+          <NavItem 
+            icon={<Home />} 
+            text="Overview" 
+            id="overview" 
+            active={activeTab === 'overview'} 
+            onClick={() => handleNavigation('overview')} 
+          />
+          <div className="relative">
+            <NavItem 
+              icon={<Award />} 
+              text="Achievements" 
+              id="achievements" 
+              active={activeTab === 'achievements'} 
+              onClick={() => handleNavigation('achievements')} 
+            />
+            <span className="absolute right-2 top-2.5 text-xs bg-indigo-300 text-indigo-800 px-1.5 py-0.5 rounded-full font-medium">
+              Coming soon
+            </span>
           </div>
-          <div className="ml-3">
-            <h3 className="font-medium text-white">{userName || "Guest"}</h3>
-            <p className="text-xs text-indigo-200">Player</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-indigo-500/30 rounded-lg p-2">
-            <p className="text-xs text-indigo-200">Points</p>
-            <p className="font-bold text-white">{userPoints.toLocaleString()}</p>
-          </div>
-          <div className="bg-indigo-500/30 rounded-lg p-2">
-            <p className="text-xs text-indigo-200">Tickets</p>
-            <p className="font-bold text-white">{userPrestigeTickets}</p>
-          </div>
-        </div>
+          <NavItem 
+            icon={<Ticket />} 
+            text="Buy Tickets" 
+            id="buy-tickets" 
+            active={activeTab === 'buy-tickets'} 
+            onClick={() => handleNavigation('buy-tickets')} 
+          />
+          <NavItem 
+            icon={<Code />} 
+            text="Submit Code" 
+            id="submit-code" 
+            active={activeTab === 'submit-code'} 
+            onClick={() => handleNavigation('submit-code')} 
+          />
+          <NavItem 
+            icon={<Trophy />} 
+            text="Leaderboard" 
+            id="leaderboard" 
+            active={activeTab === 'leaderboard'} 
+            onClick={() => handleNavigation('leaderboard')} 
+          />
+          <NavItem 
+            icon={<Activity />} 
+            text="Activity" 
+            id="activity" 
+            active={activeTab === 'activity'} 
+            onClick={() => handleNavigation('activity')} 
+          />
+          <NavItem 
+            icon={<Settings />} 
+            text="Settings" 
+            id="settings" 
+            active={activeTab === 'settings'} 
+            onClick={() => handleNavigation('settings')} 
+          />
+        </nav>
       </div>
-
-      {/* Menu */}
-      <nav className="flex-1 overflow-y-auto p-2">
-        <ul className="space-y-1">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-
-            return (
-              <li key={item.id}>
-                <button
-                  onClick={() => handleNavigation(item.id)}
-                  className={`
-                    w-full flex items-center justify-between p-3 rounded-lg transition-colors
-                    ${isActive 
-                      ? 'bg-white/20 text-white' 
-                      : 'hover:bg-white/10 text-indigo-200'
-                    }
-                  `}
-                >
-                  <div className="flex items-center space-x-3">
-                    <Icon className="h-5 w-5" />
-                    <span className="font-medium">{item.label}</span>
-                  </div>
-                  {item.comingSoon && (
-                    <span className="text-xs bg-yellow-400 text-black font-semibold px-2 py-0.5 rounded-full">
-                      Coming Soon
-                    </span>
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-
-      {/* Bottom Menu */}
-      <div className="p-2 border-t border-indigo-500">
-        <ul className="space-y-1">
-          <li>
-            <button
-              onClick={() => handleNavigation('settings')}
-              className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-white/10 text-indigo-200 transition-colors"
-            >
-              <Settings className="h-5 w-5" />
-              <span className="font-medium">Settings</span>
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-red-600/20 text-red-200 transition-colors"
-            >
-              <LogOut className="h-5 w-5" />
-              <span className="font-medium">Logout</span>
-            </button>
-          </li>
-        </ul>
+      
+      {/* Logout Button */}
+      <div className="p-4 border-t border-indigo-600">
+        <button
+          onClick={handleLogout}
+          className="flex items-center space-x-2 text-indigo-200 hover:text-white transition-colors w-full py-2 px-3 rounded-lg hover:bg-indigo-500/30"
+        >
+          <LogOut className="h-5 w-5 flex-shrink-0" />
+          <span className="text-sm">Log out</span>
+        </button>
       </div>
-    </aside>
+    </div>
   );
 };
+
+interface NavItemProps {
+  icon: React.ReactNode;
+  text: string;
+  id: string;
+  active?: boolean;
+  onClick: () => void;
+}
+
+function NavItem({ icon, text, id, active = false, onClick }: NavItemProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center space-x-3 w-full px-3 py-2.5 mb-1 rounded-lg transition-all ${
+        active 
+          ? 'bg-gradient-to-r from-indigo-500 to-indigo-400 text-white shadow-md' 
+          : 'text-indigo-200 hover:bg-indigo-500/30 hover:text-white'
+      }`}
+    >
+      <span className={active ? 'text-white' : 'text-indigo-300'}>{icon}</span>
+      <span className="font-medium text-sm">{text}</span>
+      {active && <div className="ml-auto h-2 w-2 rounded-full bg-white"></div>}
+    </button>
+  );
+}
 
 export default Sidebar;
