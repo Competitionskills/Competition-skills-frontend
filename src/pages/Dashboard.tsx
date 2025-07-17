@@ -16,7 +16,7 @@ import MobileHeader from '../components/dashboard/MobileHeader';
 import MobileNavbar from '../components/dashboard/MobileNavbar';
 import RewardNotification from '../components/dashboard/RewardNotification';
 
-import { fetchUserProfile, getDailyLoginStatus } from '../api/userApi';
+import { fetchUserProfile } from '../api/userApi';
 import { DailyLoginStatus } from '../types/user';
 
 import centerLogo from '../images/dashboard1-logo.jpg';
@@ -67,8 +67,13 @@ const Dashboard: React.FC = () => {
         setUserTickets(userData.tickets);
         setUserPrestigeTickets(userData.prestigeTickets);
 
-        const loginData = await getDailyLoginStatus();
-        setLoginStatus(loginData);
+        // Mock login status for now since API endpoint doesn't exist
+        setLoginStatus({
+          currentStreak: 3,
+          lastClaimDate: new Date().toISOString(),
+          claimedToday: false,
+          daysUntilPrestigeTicket: 4
+        });
       } catch (error: any) {
         console.error('Error fetching user data:', error);
         // Redirect only if backend really says unauthorized

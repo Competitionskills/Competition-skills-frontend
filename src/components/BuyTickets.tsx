@@ -118,14 +118,14 @@ const BuyTickets: React.FC<BuyTicketsProps> = ({ isOpen, onClose, userPoints, on
 
   const formatCardNumber = (value: string): string => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    const match = v.match(/\d{1,16}/)?.[0] ?? ''; // <-- match is now always a string
+    const match = v.match(/\d{1,16}/)?.[0] ?? '';
     const parts: string[] = [];
   
     for (let i = 0; i < match.length; i += 4) {
       parts.push(match.substring(i, i + 4));
     }
   
-    return parts.length ? parts.join(' ') : value;
+    return parts.length ? parts.join(' ') : '';
   };
 
   return (

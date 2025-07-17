@@ -6,11 +6,6 @@ import ReferralCard from './ReferralCard';
 import ReferralsList from './ReferralsList';
 import { DailyLoginStatus } from '../../types/user';
 
-interface LoginStatus {
-  currentStreak: number;
-  claimedToday: boolean;
-}
-
 interface MainContentProps {
   userName: string | null;
   activeTab: string;

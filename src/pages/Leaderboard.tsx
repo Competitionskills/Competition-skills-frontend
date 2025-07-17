@@ -4,7 +4,14 @@ import { Trophy, Medal, Award, Crown, Star, Flame } from "lucide-react";
 import Header from "../components/Header"; // Import Header Component
 import BackgroundImage from "../images/background-img.jpg"; // Ensure this path is correct
 
-const leaderboardData = [
+interface LeaderboardPlayer {
+  rank: number;
+  name: string;
+  competitions: number;
+  points: number;
+}
+
+const leaderboardData: LeaderboardPlayer[] = [
   { rank: 1, name: "Alex Thompson", competitions: 15, points: 38000 },
   { rank: 2, name: "Sarah Chen", competitions: 12, points: 24500 },
   { rank: 3, name: "Michael Rodriguez", competitions: 14, points: 23000 },
@@ -15,7 +22,7 @@ const leaderboardData = [
   { rank: 8, name: "Michael Rodriguez", competitions: 3, points: 9000 },
 ];
 
-function getRankIcon(rank) {
+function getRankIcon(rank: number) {
   switch (rank) {
     case 1:
       return (
