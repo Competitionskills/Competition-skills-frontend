@@ -9,6 +9,7 @@ import {
 
 import SubmitCode from '../components/submitCode';
 import BuyTickets from '../components/BuyTickets';
+import Referrals from '../components/dashboard/Referrals';
 import Sidebar from '../components/dashboard/Sidebar';
 import StatsPanel from '../components/dashboard/StatsPanel';
 import MainContent from '../components/dashboard/MainContent';
@@ -28,6 +29,7 @@ const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showSubmitCode, setShowSubmitCode] = useState(false);
   const [showBuyTickets, setShowBuyTickets] = useState(false);
+  const [showReferrals, setShowReferrals] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileStatsOpen, setMobileStatsOpen] = useState(false);
 
@@ -133,6 +135,8 @@ const Dashboard: React.FC = () => {
       navigate('/leaderboard');
     } else if (tab === 'buy-tickets') {
       setShowBuyTickets(true);
+    } else if (tab === 'referrals') {
+      setShowReferrals(true);
     } else if (tab === 'submit-code') {
       setShowSubmitCode(true);
     } else {
@@ -155,6 +159,7 @@ const Dashboard: React.FC = () => {
         backgroundRepeat: 'no-repeat'
       }}
     >
+    
       <div className="absolute inset-0 bg-indigo-900/10 backdrop-blur-sm"></div>
 
       <MobileHeader
@@ -217,6 +222,14 @@ const Dashboard: React.FC = () => {
         userPoints={userPoints}
         onPurchase={handleTicketPurchase}
       />
+
+      
+      {/* Referrals Modal */}
+      <Referrals 
+        isOpen={showReferrals} 
+        onClose={() => setShowReferrals(false)}
+      />
+
 
       <RewardNotification
         isVisible={rewardNotification.visible}
