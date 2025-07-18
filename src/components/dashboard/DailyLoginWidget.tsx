@@ -32,7 +32,7 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({ onRewardClaimed }) 
 
     console.log('[📦 fetchDailyStatus] Using token:', token);
 
-    const url = `${process.env.REACT_APP_API_BASE_URL}/rewards/daily-login/status`;
+    const url = `https://api.scoreperks.co.uk/api/rewards/daily-login/status`;
     console.log('[🌐 fetchDailyStatus] Requesting URL:', url);
 
     const res = await fetch(url, {
