@@ -13,6 +13,7 @@ const Signup = () => {
     password: "",
     postCode: "",
     phone: "",
+    referralCode: "",
   });
 
   const [message, setMessage] = useState("");
@@ -129,10 +130,8 @@ const Signup = () => {
 
             <div className="relative">
               <PhoneInput
-
                 country="gb"
                 value={formData.phone}
-
                 onChange={handlePhoneChange}
                 inputStyle={{
                   width: '100%',
@@ -168,6 +167,15 @@ const Signup = () => {
               placeholder="Post Code"
               className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={formData.postCode}
+              onChange={handleChange}
+            />
+
+            <input
+              type="text"
+              name="referralCode"
+              placeholder="Referral Code (Optional)"
+              className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.referralCode}
               onChange={handleChange}
             />
 
