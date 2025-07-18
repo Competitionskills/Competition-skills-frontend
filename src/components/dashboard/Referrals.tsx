@@ -57,7 +57,7 @@ const Referrals: React.FC<ReferralsProps> = ({ isOpen, onClose }) => {
 
     setReferralData({
       referralCode: data.referralCode,
-      referralLink: data.referralLink,
+  referralLink: `https://scoreperks.co.uk/signup?ref=${data.referralCode}`, 
       totalReferrals: data.totalReferrals,
       totalPointsEarned: data.totalPointsEarned,
       recentReferrals: data.recentReferrals || [],
