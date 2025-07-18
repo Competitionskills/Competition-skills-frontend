@@ -37,32 +37,38 @@ const Referrals: React.FC<ReferralsProps> = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
-  const fetchReferralData = async () => {
-    setLoading(true);
-    try {
-      // Simulate API call - replace with actual API endpoint
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock data - replace with actual API response
-      const userData = {
-        referralCode: 'REF' + Math.random().toString(36).substr(2, 8).toUpperCase(),
-        referralLink: `https://yourdomain.com/register?ref=REF${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
-        totalReferrals: 12,
-        totalPointsEarned: 2400,
-        recentReferrals: [
-          { username: 'john_doe', pointsEarned: 200, date: '2024-01-15' },
-          { username: 'jane_smith', pointsEarned: 200, date: '2024-01-14' },
-          { username: 'mike_wilson', pointsEarned: 200, date: '2024-01-13' },
-        ]
-      };
-      
-      setReferralData(userData);
-    } catch (error) {
-      console.error('Error fetching referral data:', error);
-    } finally {
+ const fetchReferralData = async () => {
+  setLoading(true);
+  try {
+    const res = await fetch(`https://api.scoreperks.co.uk/api/referrals`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (!res.ok) {
+      console.error('❌ Failed to fetch referral data:', res.status);
       setLoading(false);
+      return;
     }
-  };
+
+    const data = await res.json();
+    console.log('✅ Referral API data:', data);
+
+    setReferralData({
+      referralCode: data.referralCode,
+      referralLink: data.referralLink,
+      totalReferrals: data.totalReferrals,
+      totalPointsEarned: data.totalPointsEarned,
+      recentReferrals: data.recentReferrals || [],
+    });
+  } catch (error) {
+    console.error('❌ Error fetching referral data:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const copyToClipboard = async (text: string, type: 'code' | 'link') => {
     try {
@@ -172,7 +178,7 @@ const Referrals: React.FC<ReferralsProps> = ({ isOpen, onClose }) => {
                 </button>
               </div>
               <p className="text-sm text-gray-600">
-                Share this code with friends during registration to earn 200 points for each successful referral!
+                Share this code with friends during registration to earn 50 points for each successful referral!
               </p>
             </div>
 
@@ -223,7 +229,7 @@ const Referrals: React.FC<ReferralsProps> = ({ isOpen, onClose }) => {
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="font-semibold text-amber-600">3.</span>
-                  <span>You both earn 200 bonus points!</span>
+                  <span>You both earn 50 bonus points!</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="font-semibold text-amber-600">4.</span>
