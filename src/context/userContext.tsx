@@ -1,14 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { fetchUserProfile } from '../api/userApi'; // ✅ Import your API call
 
 interface User {
-  id: string;
-  _id?: string;
-  name: string;
-  email: string;
+  _id: string;
+  username: string;
   points: number;
-  username?: string;
-  // Add more fields if needed
+  tickets?: number;
+  prestigeTickets?: number;
 }
 
 interface UserContextType {
@@ -24,23 +21,44 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isUserLoading, setIsUserLoading] = useState<boolean>(true);
 
- const refreshUser = async () => {
-  try {
-    setIsUserLoading(true);
-    const userData = await fetchUserProfile();
-    const normalizedUser = {
-      ...userData,
-      id: userData._id || userData.id,
-    };
-    setUser(normalizedUser);
-  } catch (error) {
-    console.error("❌ Failed to load user:", error);
-    setUser(null); // fallback
-  } finally {
-    setIsUserLoading(false);
-  }
-};
+  const refreshUser = async () => {
+    console.log('[🔄 RefreshUser] Starting...');
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.warn('[⚠️ No token found in localStorage]');
+        setUser(null);
+        setIsUserLoading(false);
+        return;
+      }
 
+      // ✅ Updated endpoint to your working route:
+      const res = await fetch('https://api.scoreperks.co.uk/api/users/user', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log('[📡 Fetch status]', res.status);
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('[❌ Failed to fetch user]', res.status, text);
+        setUser(null);
+      } else {
+        const data = await res.json();
+        console.log('[✅ User fetched]', data);
+        setUser(data);
+      }
+    } catch (err) {
+      console.error('[❌ Error fetching user]', err);
+      setUser(null);
+    } finally {
+      setIsUserLoading(false);
+    }
+  };
 
   useEffect(() => {
     refreshUser();
