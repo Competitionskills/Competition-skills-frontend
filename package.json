@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@stripe/react-stripe-js": "^3.7.0",
+    "@stripe/stripe-js": "^7.5.0",
     "@supabase/supabase-js": "^2.48.1",
     "@tailwindcss/vite": "^4.0.8",
     "axios": "^1.7.9",
