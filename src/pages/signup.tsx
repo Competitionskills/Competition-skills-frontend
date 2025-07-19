@@ -4,8 +4,14 @@ import "react-phone-input-2/lib/style.css";
 import { motion } from "framer-motion";
 import { Trophy, Gamepad, Gift, Medal } from "lucide-react";
 import api from "../helpers/axios";
+import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
+
+
+
 
 const Signup = () => {
+  const location = useLocation();
   const [formData, setFormData] = useState({
     fullName: "",
     username: "",
@@ -19,7 +25,16 @@ const Signup = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+ React.useEffect(() => {
+  const params = new URLSearchParams(location.search);
+  const refCode = params.get("ref");
+  if (refCode) {
+    setFormData((prev) => ({
+      ...prev,
+      referralCode: refCode,
+    }));
+  }
+}, [location.search]);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -32,7 +47,8 @@ const Signup = () => {
     const { fullName, username, email, password, postCode, phone } = formData;
 
     if (!fullName || !username || !email || !password || !postCode || !phone) {
-      setError("All fields are required.");
+setError("Please fill in all required fields.");
+
       return false;
     }
     if (!/^\S+@\S+\.\S+$/.test(email)) {
