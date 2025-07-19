@@ -188,51 +188,73 @@ const MainContent: React.FC<MainContentProps> = ({
                 </div>
                 
                 {/* Competition Cards Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                   {[
                     {
-                      title: "Weekly Challenge",
-                      rank: "#4",
+                      title: "Cash Prize Challenge",
+                      prize: "$5,000",
+                      participants: "2,847",
+                      timeLeft: "3 days left",
                       bgColor: "bg-gradient-to-br from-purple-500 to-purple-600",
-                      icon: "🏆"
+                      prizeImage: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=500",
+                      rank: "#4"
                     },
                     {
-                      title: "Golden Tickets Challenge",
-                      rank: "#7",
+                      title: "iPhone 15 Pro Giveaway",
+                      prize: "iPhone 15 Pro",
+                      participants: "1,523",
+                      timeLeft: "1 week left",
                       bgColor: "bg-gradient-to-br from-yellow-400 to-orange-500",
-                      icon: "⭐"
+                      prizeImage: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&q=80&w=500",
+                      rank: "#12"
                     },
                     {
-                      title: "Easter Egg Hunt",
-                      rank: "#8",
+                      title: "Gaming Setup Contest",
+                      prize: "Gaming Setup",
+                      participants: "956",
+                      timeLeft: "5 days left",
                       bgColor: "bg-gradient-to-br from-blue-400 to-blue-600",
-                      icon: "🥚"
-                    },
-                    {
-                      title: "Kingsmen Invitational",
-                      rank: "#12",
-                      bgColor: "bg-gradient-to-br from-green-400 to-green-600",
-                      icon: "👑"
-                    },
-                    {
-                      title: "Esports Championship",
-                      rank: "#9",
-                      bgColor: "bg-gradient-to-br from-cyan-400 to-cyan-600",
-                      icon: "🎮"
+                      prizeImage: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&q=80&w=500",
+                      rank: "#8"
                     }
                   ].map((competition, index) => (
-                    <div key={index} className={`${competition.bgColor} rounded-xl p-4 text-white relative overflow-hidden hover:scale-105 transition-transform duration-200`}>
-                      <div className="absolute top-2 right-2 text-2xl opacity-20">
-                        {competition.icon}
-                      </div>
-                      <div className="relative z-10">
-                        <h4 className="font-bold text-sm mb-2 leading-tight">{competition.title}</h4>
-                        <div className="flex items-center justify-between mt-4">
-                          <span className="text-xs opacity-80">Rank</span>
-                          <div className="bg-white/20 rounded-full px-2 py-1">
-                            <span className="text-lg font-bold">{competition.rank}</span>
+                    <div key={index} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300">
+                      {/* Prize Image */}
+                      <div className="relative h-48 overflow-hidden">
+                        <img 
+                          src={competition.prizeImage} 
+                          alt={competition.prize}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                        <div className="absolute top-3 right-3">
+                          <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1">
+                            <span className="text-sm font-bold text-gray-800">Rank {competition.rank}</span>
                           </div>
                         </div>
+                        <div className="absolute bottom-3 left-3 text-white">
+                          <h4 className="font-bold text-lg mb-1">{competition.title}</h4>
+                          <p className="text-sm opacity-90">{competition.timeLeft}</p>
+                        </div>
+                      </div>
+                      
+                      {/* Competition Details */}
+                      <div className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <p className="text-sm text-gray-600">Prize</p>
+                            <p className="font-bold text-lg text-green-600">{competition.prize}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-gray-600">Participants</p>
+                            <p className="font-bold text-indigo-600">{competition.participants}</p>
+                          </div>
+                        </div>
+                        
+                        {/* Participate Button */}
+                        <button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                          Participate Now
+                        </button>
                       </div>
                     </div>
                   ))}
