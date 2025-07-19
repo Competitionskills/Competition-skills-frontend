@@ -183,14 +183,87 @@ const MainContent: React.FC<MainContentProps> = ({
             <>
               <div className="bg-white shadow-lg rounded-xl p-4 md:p-6 border border-indigo-100">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold text-indigo-800">Monthly Performance</h3>
+                  <h3 className="text-xl font-bold text-indigo-800">Competitions Participated</h3>
                   <div className="flex items-center space-x-2 bg-indigo-50 rounded-md px-3 py-1">
-                    <span className="text-sm text-indigo-600">Jan 08 - Aug 08</span>
+                    <span className="text-sm text-indigo-600">Recent Activity</span>
                     <ChevronRight className="h-4 w-4 text-indigo-400" />
                   </div>
                 </div>
-                <div className="h-64">
-                  <BarChart />
+                <div className="space-y-4">
+                  {[
+                    {
+                      title: "March Challenge",
+                      status: "Completed",
+                      prize: "$5,000",
+                      rank: "3rd Place",
+                      participants: "2.8k",
+                      date: "Mar 15, 2024",
+                      statusColor: "green"
+                    },
+                    {
+                      title: "Weekly Quiz Battle",
+                      status: "In Progress",
+                      prize: "$1,200",
+                      rank: "Currently 5th",
+                      participants: "1.2k",
+                      date: "Ongoing",
+                      statusColor: "blue"
+                    },
+                    {
+                      title: "Speed Challenge",
+                      status: "Completed",
+                      prize: "$800",
+                      rank: "1st Place",
+                      participants: "856",
+                      date: "Feb 28, 2024",
+                      statusColor: "green"
+                    },
+                    {
+                      title: "Strategy Masters",
+                      status: "Completed",
+                      prize: "$2,500",
+                      rank: "7th Place",
+                      participants: "3.1k",
+                      date: "Feb 10, 2024",
+                      statusColor: "green"
+                    }
+                  ].map((competition, index) => (
+                    <div key={index} className="bg-gradient-to-r from-indigo-50 to-white rounded-lg p-4 border border-indigo-100 hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-lg font-semibold text-indigo-900">{competition.title}</h4>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          competition.statusColor === 'green' 
+                            ? 'bg-green-100 text-green-700' 
+                            : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {competition.status}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600">Prize Pool</span>
+                          <p className="font-semibold text-green-600">{competition.prize}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Your Rank</span>
+                          <p className="font-semibold text-indigo-600">{competition.rank}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Participants</span>
+                          <p className="font-semibold text-gray-700">{competition.participants}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Date</span>
+                          <p className="font-semibold text-gray-700">{competition.date}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-6 text-center">
+                  <button className="text-indigo-600 hover:text-indigo-800 font-medium text-sm">
+                    View All Competitions →
+                  </button>
                 </div>
               </div>
 
