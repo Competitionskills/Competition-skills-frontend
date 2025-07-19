@@ -181,95 +181,68 @@ const MainContent: React.FC<MainContentProps> = ({
         <div className="grid grid-cols-1 gap-6">
           {activeTab !== 'referrals' && (
             <>
+              {/* Competitions Section */}
               <div className="bg-white shadow-lg rounded-xl p-4 md:p-6 border border-indigo-100">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold text-indigo-800">Competitions Participated</h3>
-                  <div className="flex items-center space-x-2 bg-indigo-50 rounded-md px-3 py-1">
-                    <span className="text-sm text-indigo-600">Recent Activity</span>
-                    <ChevronRight className="h-4 w-4 text-indigo-400" />
-                  </div>
+                  <h3 className="text-xl font-bold text-indigo-800">Competitions</h3>
                 </div>
-                <div className="space-y-4">
+                
+                {/* Competition Cards Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
                   {[
                     {
-                      title: "March Challenge",
-                      status: "Completed",
-                      prize: "$5,000",
-                      rank: "3rd Place",
-                      participants: "2.8k",
-                      date: "Mar 15, 2024",
-                      statusColor: "green"
+                      title: "Weekly Challenge",
+                      rank: "#4",
+                      bgColor: "bg-gradient-to-br from-purple-500 to-purple-600",
+                      icon: "🏆"
                     },
                     {
-                      title: "Weekly Quiz Battle",
-                      status: "In Progress",
-                      prize: "$1,200",
-                      rank: "Currently 5th",
-                      participants: "1.2k",
-                      date: "Ongoing",
-                      statusColor: "blue"
+                      title: "Golden Tickets Challenge",
+                      rank: "#7",
+                      bgColor: "bg-gradient-to-br from-yellow-400 to-orange-500",
+                      icon: "⭐"
                     },
                     {
-                      title: "Speed Challenge",
-                      status: "Completed",
-                      prize: "$800",
-                      rank: "1st Place",
-                      participants: "856",
-                      date: "Feb 28, 2024",
-                      statusColor: "green"
+                      title: "Easter Egg Hunt",
+                      rank: "#8",
+                      bgColor: "bg-gradient-to-br from-blue-400 to-blue-600",
+                      icon: "🥚"
                     },
                     {
-                      title: "Strategy Masters",
-                      status: "Completed",
-                      prize: "$2,500",
-                      rank: "7th Place",
-                      participants: "3.1k",
-                      date: "Feb 10, 2024",
-                      statusColor: "green"
+                      title: "Kingsmen Invitational",
+                      rank: "#12",
+                      bgColor: "bg-gradient-to-br from-green-400 to-green-600",
+                      icon: "👑"
+                    },
+                    {
+                      title: "Esports Championship",
+                      rank: "#9",
+                      bgColor: "bg-gradient-to-br from-cyan-400 to-cyan-600",
+                      icon: "🎮"
                     }
                   ].map((competition, index) => (
-                    <div key={index} className="bg-gradient-to-r from-indigo-50 to-white rounded-lg p-4 border border-indigo-100 hover:shadow-md transition-shadow">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-lg font-semibold text-indigo-900">{competition.title}</h4>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          competition.statusColor === 'green' 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-blue-100 text-blue-700'
-                        }`}>
-                          {competition.status}
-                        </span>
+                    <div key={index} className={`${competition.bgColor} rounded-xl p-4 text-white relative overflow-hidden hover:scale-105 transition-transform duration-200`}>
+                      <div className="absolute top-2 right-2 text-2xl opacity-20">
+                        {competition.icon}
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-600">Prize Pool</span>
-                          <p className="font-semibold text-green-600">{competition.prize}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Your Rank</span>
-                          <p className="font-semibold text-indigo-600">{competition.rank}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Participants</span>
-                          <p className="font-semibold text-gray-700">{competition.participants}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Date</span>
-                          <p className="font-semibold text-gray-700">{competition.date}</p>
+                      <div className="relative z-10">
+                        <h4 className="font-bold text-sm mb-2 leading-tight">{competition.title}</h4>
+                        <div className="flex items-center justify-between mt-4">
+                          <span className="text-xs opacity-80">Rank</span>
+                          <div className="bg-white/20 rounded-full px-2 py-1">
+                            <span className="text-lg font-bold">{competition.rank}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="mt-6 text-center">
-                  <button className="text-indigo-600 hover:text-indigo-800 font-medium text-sm">
-                    View All Competitions →
-                  </button>
-                </div>
               </div>
 
+              {/* Daily Login Activity Table */}
               <div className="bg-white shadow-lg rounded-xl p-4 md:p-6 border border-indigo-100">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold text-indigo-800">Recent Activity</h3>
+                  <h3 className="text-xl font-bold text-indigo-800">Daily Login</h3>
                   <button className="text-sm text-indigo-600 hover:text-indigo-800">View All</button>
                 </div>
                 <div className="overflow-x-auto">
@@ -291,11 +264,74 @@ const MainContent: React.FC<MainContentProps> = ({
                       </tr>
                     </thead>
                     <tbody>
-                      <ActivityRow name="Jenny Wilson" activity="Bought Tickets" details="5 Prestige Tickets" time="2m ago" type="purchase" />
-                      <ActivityRow name="Michael Scott" activity="Competition" details="Ranked #1 in Weekly Challenge" time="5m ago" type="competition" />
-                      <ActivityRow name="Jim Halpert" activity="Achievement" details="Perfect Score Streak" time="12m ago" type="achievement" />
-                      <ActivityRow name="Pam Beesly" activity="Bought Tickets" details="3 Golden Tickets" time="15m ago" type="purchase" />
-                      <ActivityRow name="Dwight Schrute" activity="Competition" details="Joined Tournament Alpha" time="20m ago" type="competition" />
+                      <tr className="border-b border-indigo-100 hover:bg-indigo-50/50 transition-colors">
+                        <td className="py-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-400 flex items-center justify-center text-white font-bold text-xs">
+                              TE
+                            </div>
+                            <span className="font-medium text-sm text-indigo-900">Jenny Wilson</span>
+                          </div>
+                        </td>
+                        <td className="py-4">
+                          <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-600">
+                            Best Thinkbeat
+                          </span>
+                        </td>
+                        <td className="py-4 text-sm font-medium text-indigo-600">Weekly Challenge</td>
+                        <td className="py-4 text-sm text-blue-500">Ecosy</td>
+                      </tr>
+                      <tr className="border-b border-indigo-100 hover:bg-indigo-50/50 transition-colors">
+                        <td className="py-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-green-400 to-blue-400 flex items-center justify-center text-white font-bold text-xs">
+                              MS
+                            </div>
+                            <span className="font-medium text-sm text-indigo-900">Michael Scott</span>
+                          </div>
+                        </td>
+                        <td className="py-4">
+                          <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-600">
+                            Golden Tickets
+                          </span>
+                        </td>
+                        <td className="py-4 text-sm font-medium text-indigo-600">Golden Tickets Challenge</td>
+                        <td className="py-4 text-sm text-blue-500">Best Rank 1</td>
+                      </tr>
+                      <tr className="border-b border-indigo-100 hover:bg-indigo-50/50 transition-colors">
+                        <td className="py-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold text-xs">
+                              JH
+                            </div>
+                            <span className="font-medium text-sm text-indigo-900">Jim Halpert</span>
+                          </div>
+                        </td>
+                        <td className="py-4">
+                          <span className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-600">
+                            Easter Egg Hunt
+                          </span>
+                        </td>
+                        <td className="py-4 text-sm font-medium text-indigo-600">Easter Egg Hunt</td>
+                        <td className="py-4 text-sm text-blue-500">Best Rank 3</td>
+                      </tr>
+                      <tr className="border-b border-indigo-100 hover:bg-indigo-50/50 transition-colors">
+                        <td className="py-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-green-400 to-teal-400 flex items-center justify-center text-white font-bold text-xs">
+                              PB
+                            </div>
+                            <span className="font-medium text-sm text-indigo-900">Pam Beesly</span>
+                          </div>
+                        </td>
+                        <td className="py-4">
+                          <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600">
+                            Kingsmen Invitational
+                          </span>
+                        </td>
+                        <td className="py-4 text-sm font-medium text-indigo-600">Kingsmen Invitational</td>
+                        <td className="py-4 text-sm text-blue-500">Best Rank 1</td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
