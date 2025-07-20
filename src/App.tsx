@@ -11,6 +11,11 @@ import "./index.css";
 import { useEffect } from "react";
 import { setAuthToken } from "./helpers/axios";
 import { UserProvider } from "./context/userContext";
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+// ✅ Replace with your own publishable key
+const stripePromise = loadStripe('pk_test_51RmhOCFW9n2BdCkE7OqPEUVIRv0iMx3GOMOxoOBW1jlYoJuUD44B5hEXV3MsPJF8bTLdmBI2d1OqFMJudP87R2wj00D3IxvMDR');
+
 
 function App() {
   useEffect(() => {
@@ -21,6 +26,8 @@ function App() {
   }, []);
   return (
     <UserProvider>
+            <Elements stripe={stripePromise}>
+
     <Router>
       <Routes>
       <Route path="/" element={<ComingSoon />} />
@@ -33,6 +40,8 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword/>} />
       </Routes>
     </Router>
+          </Elements>
+
     </UserProvider>
   );
 }
