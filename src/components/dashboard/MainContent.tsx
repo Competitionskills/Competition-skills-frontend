@@ -86,10 +86,10 @@ const MainContent: React.FC<MainContentProps> = ({
       </header>
 
       <main className="max-w-7xl mx-auto py-6 px-4 md:px-6 pb-20 md:pb-6">
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <h2 className="text-2xl font-bold text-indigo-800">Player Dashboard</h2>
           <p className="text-indigo-600">Track your gaming progress</p>
-        </div>
+        </div> */}
 
         {/* Mobile Stats Section */}
         <div className="md:hidden mb-6">

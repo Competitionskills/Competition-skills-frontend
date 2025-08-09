@@ -7,6 +7,7 @@ import Leaderboard from "./pages/Leaderboard";
 import ComingSoon from "./pages/Comingsoon";
 import VerifyEmail from "./pages/verify-email";
 import ResetPassword from "./pages/reset-password";
+import Competitions from "./pages/competitions";
 import "./index.css";
 import { useEffect } from "react";
 import { setAuthToken } from "./helpers/axios";
@@ -35,6 +36,7 @@ function App() {
         <Route path="/Login" element={<Login />} />
         <Route path="/Home" element={<Home />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/competitions" element={<Competitions />} />
         <Route path="/Leaderboard" element={<Leaderboard />} />
         <Route path="/verify-email" element={<VerifyEmail/>} />
         <Route path="/reset-password" element={<ResetPassword/>} />
