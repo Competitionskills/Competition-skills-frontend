@@ -1,8 +1,49 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Bell, ChevronRight, Info, Gift } from 'lucide-react';
-import { ActivityRow } from './ActivityRow';
-import { BarChart } from './BarChart';
-import { DailyLoginStatus } from '../../types/user';
+import React, { useState, useEffect } from "react";
+import { Search, Bell } from "lucide-react";
+import { DailyLoginStatus } from "../../types/user";
+import MyCompetitions, { MyCompetitionItem } from "./MycompetitionItems";
+import { useUser } from "../../context/userContext";
+
+const API_BASE = process.env.REACT_APP_API_URL || "https://api.scoreperks.co.uk";
+
+type CompetitionStatus = "open" | "closed";
+type Participant = { ticketId: string; userId: string };
+
+type Competition = {
+  _id: string;
+  title: string;
+  description?: string;
+  bannerUrl?: string;
+  endsAt: string;
+  entryCost: number;
+  status: CompetitionStatus;
+  participants?: Participant[];
+};
+
+// cashy fallback images
+const CASH_IMAGES = [
+  "https://images.unsplash.com/photo-1567427018141-0584cfcbf1b8?q=80&w=1200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?q=80&w=1200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1607013406962-5f8f3f7f8d53?q=80&w=1200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?q=80&w=1200&auto=format&fit=crop",
+];
+function imageFor(c: Competition) {
+  if (c.bannerUrl) return c.bannerUrl;
+  const i = Math.floor(Math.random() * CASH_IMAGES.length);
+  return CASH_IMAGES[i];
+}
+
+function timeLeft(iso?: string) {
+  if (!iso) return "—";
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return "Ended";
+  const d = Math.floor(ms / 86400000);
+  const h = Math.floor((ms % 86400000) / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  if (d > 0) return `${d} days left`;
+  if (h > 0) return `${h}h ${m}m left`;
+  return `${m}m left`;
+}
 
 interface MainContentProps {
   userName: string | null;
@@ -14,6 +55,7 @@ interface MainContentProps {
   updatePrestigeTickets: (tickets: number) => void;
   updateLoginStatus: (status: DailyLoginStatus) => void;
 }
+
 const MainContent: React.FC<MainContentProps> = ({
   userName,
   activeTab,
@@ -22,43 +64,116 @@ const MainContent: React.FC<MainContentProps> = ({
   loginStatus,
   updatePoints,
   updatePrestigeTickets,
-  updateLoginStatus
+  updateLoginStatus,
 }) => {
+  const { user } = useUser();
+  const currentUserId = String(
+    (user as any)?._id ?? (user as any)?.id ?? localStorage.getItem("userId") ?? ""
+  );
+
   const [isLoading, setIsLoading] = useState(false);
   const [nextReward, setNextReward] = useState({ points: 100, prestigeTickets: 0 });
 
+  // competitions
+  const [comps, setComps] = useState<Competition[]>([]);
+  const [loadingComps, setLoadingComps] = useState(false);
+
+  // my competitions
+  const [myCompItems, setMyCompItems] = useState<MyCompetitionItem[]>([]);
+
+  // filters / confirm
+  type Filter = "all" | "open" | "closed";
+  const [filter, setFilter] = useState<Filter>("all");
+  const [confirm, setConfirm] = useState<{ open: boolean; comp?: Competition }>({ open: false });
+
+  // calculate daily reward
   useEffect(() => {
     if (loginStatus) {
       const nextDay = (loginStatus.currentStreak || 0) + 1;
       const isDay7 = nextDay % 7 === 0;
       setNextReward({
         points: isDay7 ? 500 : 100,
-        prestigeTickets: isDay7 ? 1 : 0
+        prestigeTickets: isDay7 ? 1 : 0,
       });
     }
   }, [loginStatus]);
 
- const handleClaimReward = async () => {
-  if (loginStatus.claimedToday || isLoading) return;
-  setIsLoading(true);
-  try {
-    const newStatus: DailyLoginStatus = {
-      ...loginStatus, // include lastClaimDate and daysUntilPrestigeTicket
-      currentStreak: loginStatus.currentStreak + 1,
-      claimedToday: true
-    };
-    updateLoginStatus(newStatus);
-    updatePoints(userPoints + nextReward.points);
-    if (nextReward.prestigeTickets > 0) {
-      updatePrestigeTickets(userPrestigeTickets + nextReward.prestigeTickets);
-    }
-  } catch (error) {
-    console.error('Failed to claim reward:', error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  // fetch competitions
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoadingComps(true);
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${API_BASE}/api/competitions`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+        const list: Competition[] = await res.json();
+        setComps(list);
 
+       const items: MyCompetitionItem[] = list
+  .map((c): MyCompetitionItem => {
+    const ticketsUsed =
+      (c.participants || []).filter((p) => String(p.userId) === currentUserId).length;
+
+    const status: "open" | "closed" = c.status === "open" ? "open" : "closed";
+    const time: string =
+      status === "open"
+        ? `Ends in ${timeLeft(c.endsAt)}`
+        : `Ended ${new Date(c.endsAt).toLocaleDateString()}`;
+
+    return {
+      competitionName: c.title,
+      ticketsUsed,
+      status, // typed as "open" | "closed"
+      time,
+    };
+  })
+  .filter((it) => it.ticketsUsed > 0);
+
+        setMyCompItems(items);
+      } catch (e) {
+        console.error("Failed to load competitions:", e);
+        setComps([]);
+        setMyCompItems([]);
+      } finally {
+        setLoadingComps(false);
+      }
+    })();
+  }, [currentUserId]);
+
+  // confirm participation
+  const askParticipate = (c: Competition) => {
+    if (c.status !== "open") return;
+    setConfirm({ open: true, comp: c });
+  };
+
+  const doParticipate = async () => {
+    if (!confirm.comp) return;
+    const c = confirm.comp;
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return alert("Please log in first.");
+      const res = await fetch(`${API_BASE}/api/competitions/${c._id}/participate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ ticketCount: 1 }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || data?.error || "Failed to participate");
+      alert("Entered successfully!");
+      setConfirm({ open: false });
+    } catch (e: any) {
+      alert(e.message || "Could not participate");
+      setConfirm({ open: false });
+    }
+  };
+
+  const filteredComps = comps.filter((c) =>
+    filter === "all" ? true : c.status === filter
+  );
 
   return (
     <div className="flex-1 overflow-auto relative z-10">
@@ -66,7 +181,7 @@ const MainContent: React.FC<MainContentProps> = ({
       <header className="bg-white/80 backdrop-blur-sm border-b border-indigo-100 sticky top-0 z-10 hidden md:block">
         <div className="max-w-7xl mx-auto py-4 px-6 flex justify-between items-center">
           <div className="relative">
-            <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search..."
@@ -79,181 +194,94 @@ const MainContent: React.FC<MainContentProps> = ({
               <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
             </button>
             <div className="h-9 w-9 rounded-full bg-gradient-to-r from-purple-400 to-indigo-400 flex items-center justify-center text-white font-bold ring-2 ring-indigo-300">
-              {userName ? userName.substring(0, 2).toUpperCase() : '??'}
+              {userName ? userName.substring(0, 2).toUpperCase() : "??"}
             </div>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto py-6 px-4 md:px-6 pb-20 md:pb-6">
-        {/* <div className="mb-6">
-          <h2 className="text-2xl font-bold text-indigo-800">Player Dashboard</h2>
-          <p className="text-indigo-600">Track your gaming progress</p>
-        </div> */}
-
-        {/* Mobile Stats Section */}
-        <div className="md:hidden mb-6">
-          {activeTab === 'overview' && (
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-indigo-100 overflow-hidden">
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-indigo-800 mb-4">Overview</h3>
-                {/* Stats */}
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center p-3 bg-gradient-to-r from-indigo-50 to-white rounded-lg">
-                    <div>
-                      <p className="text-sm text-indigo-500">Total Points</p>
-                      <p className="text-xl font-bold text-indigo-900">{userPoints.toLocaleString()}</p>
-                    </div>
-                    <div className="px-2 py-1 rounded bg-green-100 text-green-600">+16%</div>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-gradient-to-r from-indigo-50 to-white rounded-lg">
-                    <div>
-                      <p className="text-sm text-indigo-500">Prestige Tickets</p>
-                      <p className="text-xl font-bold text-indigo-900">{userPrestigeTickets}</p>
-                    </div>
-                    <div className="px-2 py-1 rounded bg-green-100 text-green-600">+12%</div>
-                  </div>
-                </div>
-
-                {/* Daily Login */}
-                <div className="mt-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h4 className="text-sm font-bold text-indigo-700">Daily Login</h4>
-                    <Info className="h-4 w-4 text-indigo-400 cursor-help" />
-                  </div>
-                  <div className="grid grid-cols-7 gap-2">
-                    {[1, 2, 3, 4, 5, 6, 7].map((day) => (
-                      <div
-                        key={day}
-                        className={`h-10 rounded-lg flex items-center justify-center relative ${
-                          day <= loginStatus.currentStreak
-                            ? 'bg-gradient-to-br from-green-100 to-green-200 border border-green-300 text-green-700'
-                            : day === loginStatus.currentStreak + 1 && !loginStatus.claimedToday
-                            ? 'bg-gradient-to-br from-indigo-100 to-indigo-200 border border-indigo-300 text-indigo-700 animate-pulse'
-                            : 'bg-gray-100 border border-gray-200 text-gray-400'
+        <div className="grid grid-cols-1 gap-6">
+          {activeTab !== "referrals" && (
+            <>
+              {/* Competitions Section */}
+              <div className="bg-white shadow-lg rounded-xl p-4 md:p-6 border border-indigo-100">
+                <div className="mb-6 flex items-center justify-between">
+                  <h3 className="text-xl font-bold text-indigo-800">Competitions</h3>
+                  <div className="flex gap-2">
+                    {(["all", "open", "closed"] as Filter[]).map((f) => (
+                      <button
+                        key={f}
+                        onClick={() => setFilter(f)}
+                        className={`rounded-full px-3 py-1 text-sm font-medium border ${
+                          filter === f
+                            ? "bg-indigo-600 text-white border-indigo-600"
+                            : "bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50"
                         }`}
                       >
-                        {day}
-                        {day <= loginStatus.currentStreak && (
-                          <div className="absolute -top-1 -right-1 h-3 w-3 bg-green-500 rounded-full border border-white"></div>
-                        )}
-                      </div>
+                        {f[0].toUpperCase() + f.slice(1)}
+                      </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="mt-4 p-3 bg-indigo-100 rounded-lg border border-indigo-200">
-                  <div className="flex items-center space-x-2">
-                    <Gift className="h-5 w-5 text-indigo-600" />
-                    <p className="text-sm text-indigo-700 font-medium">Day 7 Reward:</p>
-                  </div>
-                  <p className="text-sm text-indigo-900 mt-1 pl-7">500 points + 1 Prestige Ticket</p>
-                </div>
-
-                <button
-                  onClick={handleClaimReward}
-                  disabled={loginStatus.claimedToday || isLoading}
-                  className={`w-full mt-4 py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all duration-200 ${
-                    loginStatus.claimedToday
-                      ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                      : isLoading
-                      ? 'bg-indigo-400 text-white cursor-wait'
-                      : 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white hover:from-indigo-500 hover:to-indigo-400'
-                  }`}
-                >
-                  <Gift className={`h-5 w-5 ${isLoading ? 'animate-pulse' : ''}`} />
-                  <span>
-                    {loginStatus.claimedToday
-                      ? 'Already Claimed Today'
-                      : isLoading
-                      ? 'Claiming...'
-                      : 'Claim Daily Reward'}
-                  </span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        
-
-        {/* Graph and Activity */}
-        <div className="grid grid-cols-1 gap-6">
-          {activeTab !== 'referrals' && (
-            <>
-              {/* Competitions Section */}
-              <div className="bg-white shadow-lg rounded-xl p-4 md:p-6 border border-indigo-100">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold text-indigo-800">Competitions</h3>
-                </div>
-                
-                {/* Competition Cards Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                  {[
-                    {
-                      title: "Cash Prize Challenge",
-                      prize: "$5,000",
-                      participants: "2,847",
-                      timeLeft: "3 days left",
-                      bgColor: "bg-gradient-to-br from-purple-500 to-purple-600",
-                      prizeImage: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=500",
-                      rank: "#4"
-                    },
-                    {
-                      title: "iPhone 15 Pro Giveaway",
-                      prize: "iPhone 15 Pro",
-                      participants: "1,523",
-                      timeLeft: "1 week left",
-                      bgColor: "bg-gradient-to-br from-yellow-400 to-orange-500",
-                      prizeImage: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&q=80&w=500",
-                      rank: "#12"
-                    },
-                    {
-                      title: "Gaming Setup Contest",
-                      prize: "Gaming Setup",
-                      participants: "956",
-                      timeLeft: "5 days left",
-                      bgColor: "bg-gradient-to-br from-blue-400 to-blue-600",
-                      prizeImage: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&q=80&w=500",
-                      rank: "#8"
-                    }
-                  ].map((competition, index) => (
-                    <div key={index} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300">
-                      {/* Prize Image */}
+                  {loadingComps && (
+                    <div className="col-span-full rounded-xl border p-6 text-sm text-gray-600">
+                      Loading competitions…
+                    </div>
+                  )}
+                  {!loadingComps && filteredComps.length === 0 && (
+                    <div className="col-span-full rounded-xl border p-6 text-sm text-gray-600">
+                      No competitions found.
+                    </div>
+                  )}
+
+                  {filteredComps.map((c) => (
+                    <div
+                      key={c._id}
+                      className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300"
+                    >
                       <div className="relative h-48 overflow-hidden">
-                        <img 
-                          src={competition.prizeImage} 
-                          alt={competition.prize}
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={imageFor(c)} alt={c.title} className="h-full w-full object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                        <div className="absolute top-3 right-3">
-                          <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1">
-                            <span className="text-sm font-bold text-gray-800">Rank {competition.rank}</span>
-                          </div>
-                        </div>
                         <div className="absolute bottom-3 left-3 text-white">
-                          <h4 className="font-bold text-lg mb-1">{competition.title}</h4>
-                          <p className="text-sm opacity-90">{competition.timeLeft}</p>
+                          <h4 className="font-bold text-lg mb-1">{c.title}</h4>
+                          <p className="text-sm opacity-90">{timeLeft(c.endsAt)}</p>
+                        </div>
+                        <div className="absolute top-3 right-3">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                              c.status === "open"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-200 text-gray-800"
+                            }`}
+                          >
+                            {c.status}
+                          </span>
                         </div>
                       </div>
-                      
-                      {/* Competition Details */}
                       <div className="p-4">
-                        <div className="flex items-center justify-between mb-3">
+                        <div className="mb-3 flex items-center justify-between">
                           <div>
-                            <p className="text-sm text-gray-600">Prize</p>
-                            <p className="font-bold text-lg text-green-600">{competition.prize}</p>
+                            <p className="text-sm text-gray-600">Entry Cost</p>
+                            <p className="text-lg font-bold text-green-600">
+                              {c.entryCost} prestige ticket{c.entryCost > 1 ? "s" : ""}
+                            </p>
                           </div>
                           <div className="text-right">
                             <p className="text-sm text-gray-600">Participants</p>
-                            <p className="font-bold text-indigo-600">{competition.participants}</p>
+                            <p className="font-bold text-indigo-600">
+                              {(c.participants?.length ?? 0).toLocaleString()}
+                            </p>
                           </div>
                         </div>
-                        
-                        {/* Participate Button */}
-                        <button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl">
-                          Participate Now
+                        <button
+                          disabled={c.status !== "open"}
+                          onClick={() => askParticipate(c)}
+                          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
+                        >
+                          {c.status === "open" ? "Participate Now" : "Closed"}
                         </button>
                       </div>
                     </div>
@@ -261,107 +289,45 @@ const MainContent: React.FC<MainContentProps> = ({
                 </div>
               </div>
 
-              {/* Daily Login Activity Table */}
+              {/* My Competitions */}
               <div className="bg-white shadow-lg rounded-xl p-4 md:p-6 border border-indigo-100">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold text-indigo-800">Daily Login</h3>
-                  <button className="text-sm text-indigo-600 hover:text-indigo-800">View All</button>
+                  <h3 className="text-xl font-bold text-indigo-800">My Competitions</h3>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full">
-                    <thead>
-                      <tr className="border-b border-indigo-100">
-                        <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
-                          Player
-                        </th>
-                        <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
-                          Activity
-                        </th>
-                        <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
-                          Details
-                        </th>
-                        <th className="py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
-                          Time
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b border-indigo-100 hover:bg-indigo-50/50 transition-colors">
-                        <td className="py-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-400 flex items-center justify-center text-white font-bold text-xs">
-                              TE
-                            </div>
-                            <span className="font-medium text-sm text-indigo-900">Jenny Wilson</span>
-                          </div>
-                        </td>
-                        <td className="py-4">
-                          <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-600">
-                            Best Thinkbeat
-                          </span>
-                        </td>
-                        <td className="py-4 text-sm font-medium text-indigo-600">Weekly Challenge</td>
-                        <td className="py-4 text-sm text-blue-500">Ecosy</td>
-                      </tr>
-                      <tr className="border-b border-indigo-100 hover:bg-indigo-50/50 transition-colors">
-                        <td className="py-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-green-400 to-blue-400 flex items-center justify-center text-white font-bold text-xs">
-                              MS
-                            </div>
-                            <span className="font-medium text-sm text-indigo-900">Michael Scott</span>
-                          </div>
-                        </td>
-                        <td className="py-4">
-                          <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-600">
-                            Golden Tickets
-                          </span>
-                        </td>
-                        <td className="py-4 text-sm font-medium text-indigo-600">Golden Tickets Challenge</td>
-                        <td className="py-4 text-sm text-blue-500">Best Rank 1</td>
-                      </tr>
-                      <tr className="border-b border-indigo-100 hover:bg-indigo-50/50 transition-colors">
-                        <td className="py-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold text-xs">
-                              JH
-                            </div>
-                            <span className="font-medium text-sm text-indigo-900">Jim Halpert</span>
-                          </div>
-                        </td>
-                        <td className="py-4">
-                          <span className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-600">
-                            Easter Egg Hunt
-                          </span>
-                        </td>
-                        <td className="py-4 text-sm font-medium text-indigo-600">Easter Egg Hunt</td>
-                        <td className="py-4 text-sm text-blue-500">Best Rank 3</td>
-                      </tr>
-                      <tr className="border-b border-indigo-100 hover:bg-indigo-50/50 transition-colors">
-                        <td className="py-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-green-400 to-teal-400 flex items-center justify-center text-white font-bold text-xs">
-                              PB
-                            </div>
-                            <span className="font-medium text-sm text-indigo-900">Pam Beesly</span>
-                          </div>
-                        </td>
-                        <td className="py-4">
-                          <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600">
-                            Kingsmen Invitational
-                          </span>
-                        </td>
-                        <td className="py-4 text-sm font-medium text-indigo-600">Kingsmen Invitational</td>
-                        <td className="py-4 text-sm text-blue-500">Best Rank 1</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                <MyCompetitions items={myCompItems} />
               </div>
             </>
           )}
         </div>
       </main>
+
+      {/* Confirm modal */}
+      {confirm.open && confirm.comp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h4 className="mb-2 text-lg font-semibold text-indigo-900">Confirm participation</h4>
+            <p className="mb-6 text-sm text-gray-600">
+              Are you sure you want to enter{" "}
+              <span className="font-semibold text-indigo-900">{confirm.comp.title}</span> with
+              <span className="font-semibold"> 1 prestige ticket</span>?
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setConfirm({ open: false })}
+                className="rounded-lg border px-4 py-2 text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={doParticipate}
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+              >
+                Yes, participate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
