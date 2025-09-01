@@ -1,112 +1,218 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+
+// CRA env (no import.meta)
+const API_BASE = process.env.REACT_APP_API_URL || "https://api.scoreperks.co.uk";
+
+type CompetitionStatus = "open" | "closed";
+
 import Header from "../components/Header";
 import { Footer } from "../components/footer";
 import BackgroundImage from "../images/background-img.jpg";
 
+
 interface Competition {
-  id: number;
+  _id: string;
   title: string;
-  description: string;
-  image: string;
-  link: string;
+  description?: string;
+  endsAt: string;
+  entryCost: number;
+  maxTicketsPerUser: number;   // 0 = unlimited
+  status: CompetitionStatus;
+  participants?: Array<{ ticketId: string; userId: string }>;
 }
 
-const competitions: Competition[] = [
-  {
-    id: 1,
-    title: "Monthly Prestige Draw",
-    description:
-      "Enter with your prestige ticket for a chance to win big! A random participant will be chosen as our monthly winner.",
-    image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=500",
-    link: "#",
-  },
-  {
-    id: 2,
-    title: "Weekly Credits Raffle",
-    description:
-      "Use your credits to participate in this weekly raffle. Don't miss your chance to grab amazing rewards every week.",
-    image: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&q=80&w=500",
-    link: "#",
-  },
-  {
-    id: 3,
-    title: "Special Event Giveaway",
-    description:
-      "Celebrate with us! Join our special event competition for exclusive prizes. Limited time only!",
-    image: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&q=80&w=500",
-    link: "#",
-  },
-];
+async function http<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = localStorage.getItem("token");
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || data?.error || `HTTP ${res.status}`);
+  return data as T;
+}
 
-const Competitions: React.FC = () => {
+function timeLeft(iso?: string) {
+  if (!iso) return "—";
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return "ended";
+  const h = Math.floor(ms / 3_600_000);
+  const m = Math.floor((ms % 3_600_000) / 60_000);
+  const d = Math.floor(h / 24);
+  if (d > 0) return `${d}d ${h % 24}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+const ParticipateModal: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  competition: Competition | null;
+  onSuccess: () => void;
+}> = ({ open, onClose, competition, onSuccess }) => {
+  const [qty, setQty] = useState(1);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [ok, setOk] = useState<string | null>(null);
+
+  useEffect(() => { if (open) { setQty(1); setErr(null); setOk(null); } }, [open]);
+  if (!open || !competition) return null;
+
+  const submit = async () => {
+    setBusy(true); setErr(null); setOk(null);
+    try {
+      await http(`/api/competitions/${competition._id}/participate`, {
+        method: "POST",
+        body: JSON.stringify({ ticketCount: qty }),
+      });
+      setOk(`Entered with ${qty} ticket${qty > 1 ? "s" : ""}. Good luck!`);
+      onSuccess();
+    } catch (e: any) {
+      setErr(e.message || "Failed to participate");
+    } finally { setBusy(false); }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      
-      <div
-        className="relative flex-grow bg-cover bg-center"
-        style={{ backgroundImage: `url(${BackgroundImage})` }}
-      >
-        <div className="absolute inset-0 bg-indigo-900/10 backdrop-blur-sm"></div>
-        
-        <div className="relative py-6 px-6 sm:px-8 lg:px-10 w-full max-w-6xl mx-auto">
-          {/* Header Section */}
-          <div className="text-center mb-8 space-y-4">
-            <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-700 via-blue-600 to-indigo-400">
-              🎉 Competitions
-            </h1>
-            <p className="text-indigo-600 font-semibold text-xl tracking-wide">
-              Join and win exciting rewards!
-            </p>
-          </div>
-
-          {/* Intro */}
-          <div className="text-center mb-10">
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-100 p-8">
-              <h2 className="text-2xl font-semibold text-indigo-800 mb-3">
-                Ongoing & Upcoming Contests
-              </h2>
-              <p className="text-gray-700 max-w-2xl mx-auto">
-                Welcome to our competitions hub! Buy tickets, participate, and stand
-                a chance to win amazing prizes. Stay tuned for updates on our latest
-                draws and special giveaways.
-              </p>
-            </div>
-          </div>
-
-          {/* Competitions Grid */}
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-            {competitions.map((comp) => (
-              <div
-                key={comp.id}
-                className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all overflow-hidden border border-indigo-100"
-              >
-                <img
-                  src={comp.image}
-                  alt={comp.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-6">
-                  <h3 className="text-lg font-semibold text-indigo-800 mb-2">
-                    {comp.title}
-                  </h3>
-                  <p className="text-sm text-gray-700 mb-4">{comp.description}</p>
-                  <a
-                    href={comp.link}
-                    className="inline-block bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-semibold hover:from-indigo-700 hover:to-indigo-800 transition-all transform hover:scale-105"
-                  >
-                    Join Now
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Participate in {competition.title}</h2>
+          <button onClick={onClose} className="rounded px-2 py-1 text-sm hover:bg-gray-100">✕</button>
         </div>
-      </div>
+        {err && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{err}</div>}
+        {ok &&  <div className="mb-3 rounded-lg bg-green-50 p-3 text-sm text-green-700">{ok}</div>}
 
-      <Footer />
+        <label className="block text-sm font-medium">Entries</label>
+        <input
+          type="number"
+          min={1}
+          value={qty}
+          onChange={(e) => setQty(Math.max(1, parseInt(e.target.value || "1")))}
+          className="mb-3 w-full rounded-lg border p-2"
+        />
+        <p className="mb-4 text-sm text-gray-600">
+          Cost per entry: <b>{competition.entryCost}</b> prestige ticket(s)
+        </p>
+
+        <button
+          disabled={busy}
+          onClick={submit}
+          className="w-full rounded-xl bg-indigo-600 px-4 py-2 font-semibold text-white disabled:opacity-60"
+        >
+          {busy ? "Submitting…" : "Confirm Entry"}
+        </button>
+      </div>
     </div>
   );
 };
 
-export default Competitions;
+const CompetitionsPage: React.FC = () => {
+  const [filter, setFilter] = useState<"open" | "closed" | "all">("all");
+  const [list, setList] = useState<Competition[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Competition | null>(null);
+
+  const fetchAll = async (f = filter) => {
+    setLoading(true); setError(null);
+    try {
+      const q = f === "all" ? "" : `?status=${f}`;
+      const data = await http<Competition[]>(`/api/competitions${q}`);
+      setList(data);
+    } catch (e: any) {
+      setError(e.message || "Failed to load");
+    } finally { setLoading(false); }
+  };
+
+  useEffect(() => { fetchAll(filter); }, [filter]);
+
+  const cards = useMemo(() => list.map(c => (
+    <div key={c._id} className="rounded-2xl border bg-white p-4 shadow-sm">
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-lg font-semibold">{c.title}</h3>
+        <span className={
+          c.status === "open"
+            ? "rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700"
+            : "rounded-full bg-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-700"
+        }>
+          {c.status}
+        </span>
+      </div>
+      <p className="mb-3 line-clamp-2 text-sm text-gray-600">{c.description || "No description."}</p>
+      <div className="mb-3 grid grid-cols-2 gap-3 text-sm">
+        <div className="rounded-lg bg-indigo-50 p-3">
+          <div className="text-indigo-900">Ends</div>
+          <div className="font-semibold text-indigo-700">{new Date(c.endsAt).toLocaleString()}</div>
+        </div>
+        <div className="rounded-lg bg-indigo-50 p-3">
+          <div className="text-indigo-900">Time left</div>
+          <div className="font-semibold text-indigo-700">{timeLeft(c.endsAt)}</div>
+        </div>
+        <div className="rounded-lg bg-gray-50 p-3">
+          <div className="text-gray-900">Entry cost</div>
+          <div className="font-semibold text-gray-700">{c.entryCost} prestige ticket(s)</div>
+        </div>
+        <div className="rounded-lg bg-gray-50 p-3">
+          <div className="text-gray-900">Max per user</div>
+          <div className="font-semibold text-gray-700">{c.maxTicketsPerUser || "Unlimited"}</div>
+        </div>
+      </div>
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-gray-500">Participants: {c.participants?.length ?? 0}</div>
+        <button
+          disabled={c.status !== "open"}
+          onClick={() => setSelected(c)}
+          className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {c.status === "open" ? "Participate" : "Closed"}
+        </button>
+      </div>
+    </div>
+  )), [list]);
+
+  return (
+    <div className="mx-auto max-w-6xl p-4 md:p-8">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Competitions</h1>
+          <p className="text-sm text-gray-500">Join any open competition.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {(["open","closed","all"] as const).map(f => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`rounded-full px-3 py-1.5 text-sm ${filter===f ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+            >
+              {f[0].toUpperCase()+f.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading && <div className="rounded-lg border p-6">Loading…</div>}
+      {error && <div className="rounded-lg border border-red-300 bg-red-50 p-6 text-red-700">{error}</div>}
+
+      {!loading && !error && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {cards}
+          {cards.length === 0 && (
+            <div className="col-span-full rounded-xl border p-8 text-center text-sm text-gray-500">
+              No competitions found.
+            </div>
+          )}
+        </div>
+      )}
+
+      <ParticipateModal
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        competition={selected}
+        onSuccess={() => fetchAll(filter)}
+      />
+
+    </div>
+  );
+};
+
+export default CompetitionsPage;
+

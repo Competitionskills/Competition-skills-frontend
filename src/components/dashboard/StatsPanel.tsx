@@ -3,6 +3,7 @@ import { Calendar, Gift, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { StatItem } from './StatItem';
 import DailyLoginWidget from './DailyLoginWidget';
 import { DailyLoginStatus } from '../../types/user';
+import Referrals from './Referrals';
 
 interface StatsPanelProps {
   userPoints: number;
@@ -23,6 +24,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
   isMobileView,
   toggleMobileView,
   onRewardClaimed
+  
 }) => {
   const baseClasses = "bg-white/80 backdrop-blur-md border-r border-indigo-100/50 relative z-10 overflow-auto";
   
