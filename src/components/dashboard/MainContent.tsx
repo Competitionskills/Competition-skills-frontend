@@ -188,6 +188,7 @@ const MainContent: React.FC<MainContentProps> = ({
               className="pl-10 pr-4 py-2 bg-white border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-gray-700 placeholder-gray-400 w-64"
             />
           </div>
+
           <div className="flex items-center space-x-4">
             <button className="relative p-2 rounded-full bg-white hover:bg-indigo-100 transition-colors">
               <Bell className="h-5 w-5 text-indigo-600" />
