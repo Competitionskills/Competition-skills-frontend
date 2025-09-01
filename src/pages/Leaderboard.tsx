@@ -1,8 +1,8 @@
 import React from "react";
 import { Trophy, Medal, Award, Crown, Star, Flame } from "lucide-react";
-import Header from "../components/Header";
-import Footer from "../components/Footer"; // <- ensure filename case matches
-import bg from "../images/background-img.jpg"; // typed below in step 2
+import Header from "../components/Header"; // Import Header Component
+import { Footer } from "../components/footer";
+import BackgroundImage from "../images/background-img.jpg"; // Ensure this path is correct
 
 interface LeaderboardPlayer {
   rank: number;
