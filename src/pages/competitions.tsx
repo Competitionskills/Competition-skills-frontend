@@ -1,14 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-
+import Header from "../components/Header";
+import { Footer } from "../components/footer";
+import BackgroundImage from "../images/background-img.jpg";
 // CRA env (no import.meta)
 const API_BASE = process.env.REACT_APP_API_URL || "https://api.scoreperks.co.uk";
 
 type CompetitionStatus = "open" | "closed";
-
-import Header from "../components/Header";
-import { Footer } from "../components/footer";
-import BackgroundImage from "../images/background-img.jpg";
-
 
 interface Competition {
   _id: string;
