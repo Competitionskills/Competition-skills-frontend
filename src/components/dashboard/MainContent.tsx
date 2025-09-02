@@ -6,6 +6,15 @@ import MyCompetitions from "./MycompetitionItems";
 import type { MyCompetitionItem } from "./MycompetitionItems";
 import { getCompetitionPhase } from "../../utils/competition";
 import { useUser } from "../../context/userContext";
+import comp1 from "../../images/competition1.jpg";
+import comp2 from "../../images/competition2.jpg";
+import comp3 from "../../images/competition3.jpg";
+import comp4 from "../../images/competition4.jpg";
+import comp5 from "../../images/competition5.jpg";
+import comp6 from "../../images/competition6.jpg";
+
+// if you use .avif or .png etc, import them the same way
+
 
 // ===== API + types =====
 const API_BASE =
@@ -29,12 +38,8 @@ const normalizeId = (v: any) =>
   String(v?._id ?? v?.id ?? (typeof v === "object" ? v?.toString?.() : v) ?? "");
 
 // ===== cashy images =====
-const CASH_IMAGES = [
-  "https://images.unsplash.com/photo-1567427018141-0584cfcbf1b8?q=80&w=1200&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?q=80&w=1200&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1607013406962-5f8f3f7f8d53?q=80&w=1200&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?q=80&w=1200&auto=format&fit=crop",
-];
+const CASH_IMAGES = [comp1, comp2, comp3, comp4, comp5, comp6];
+
 function imageFor(c: Competition) {
   if (c.bannerUrl) return c.bannerUrl;
   const i = Math.floor(Math.random() * CASH_IMAGES.length);
