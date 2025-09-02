@@ -52,7 +52,7 @@ function Leaderboard() {
 
       <div
         className="relative flex-grow bg-cover bg-center"
-        style={{ backgroundImage: `url(${bg})` }}
+  style={{ backgroundImage: `url(${BackgroundImage})` }}
       >
         <div className="absolute inset-0 bg-indigo-900/10 backdrop-blur-sm" />
 
