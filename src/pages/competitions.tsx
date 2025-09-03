@@ -154,7 +154,7 @@ const CompetitionsPage: React.FC = () => {
         </div>
       </div>
       <div className="flex items-center justify-between">
-        <div className="text-xs text-gray-500">Participants: {c.participants?.length ?? 0}</div>
+        <div className="text-xs text-gray-500">Entries: {c.participants?.length ?? 0}</div>
         <button
           disabled={c.status !== "open"}
           onClick={() => setSelected(c)}
