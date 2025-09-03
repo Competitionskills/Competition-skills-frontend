@@ -1,14 +1,15 @@
 import React from 'react';
 import { 
-  Wallet, 
+  Wallet,
   Users, 
   Ticket,
   Code, 
   Settings, 
   LogOut, 
-  BarChart3,
+  BarChart3, 
   UserCheck,
-  Crown
+  Crown,
+  X
 } from 'lucide-react';
 
 interface ModernSidebarProps {
@@ -45,20 +46,30 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({
   return (
     <div className={`
       ${isMobile ? 'fixed inset-0 z-50' : 'hidden md:block'}
-      w-full md:w-72 bg-gradient-to-b from-indigo-900 via-indigo-800 to-purple-900 text-white relative
+      w-full md:w-72 bg-gradient-to-b from-indigo-900 via-purple-900 to-indigo-800 text-white relative border-r border-indigo-700/30
     `}>
+      {/* Close button for mobile */}
+      {isMobile && (
+        <button 
+          onClick={closeMobileMenu}
+          className="absolute top-4 right-4 p-2 rounded-full bg-indigo-800 text-white z-10"
+        >
+          <X className="h-6 w-6" />
+        </button>
+      )}
+      
       {/* Header */}
       <div className="p-6 border-b border-indigo-700/50">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
             <span className="text-white font-bold text-lg">S</span>
           </div>
-          <span className="text-xl font-bold">ScorePerks</span>
+          <span className="text-2xl font-bold text-white">ScorePerks</span>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 px-4 py-6">
+      <div className="flex-1 px-6 py-8">
         <nav className="space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -71,14 +82,14 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({
                   handleNavigation(item.id);
                   if (isMobile) closeMobileMenu();
                 }}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                className={`w-full flex items-center space-x-4 px-4 py-3 rounded-xl transition-all duration-200 ${
                   isActive 
-                    ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 border border-cyan-500/30' 
-                    : 'text-indigo-300 hover:bg-indigo-700/50 hover:text-white'
+                    ? 'bg-gradient-to-r from-cyan-500/30 to-blue-500/30 text-white border border-cyan-500/50 shadow-lg' 
+                    : 'text-indigo-300 hover:bg-indigo-700/30 hover:text-white'
                 }`}
               >
-                <Icon className="w-5 h-5" />
-                <span className="font-medium">{item.label}</span>
+                <Icon className={`w-5 h-5 ${isActive ? 'text-cyan-300' : ''}`} />
+                <span className="font-medium text-sm">{item.label}</span>
                 {item.badge && (
                   <span className="ml-auto bg-cyan-500 text-white text-xs px-2 py-1 rounded-full">
                     {item.badge}
@@ -91,28 +102,28 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({
       </div>
 
       {/* Bottom Section */}
-      <div className="p-4 border-t border-indigo-700/50">
-        <div className="mb-4 p-4 bg-indigo-800/50 rounded-xl">
+      <div className="p-6 border-t border-indigo-700/50">
+        <div className="mb-6 p-4 bg-gradient-to-r from-purple-600/30 to-indigo-600/30 rounded-xl border border-purple-500/30">
           <div className="flex items-center space-x-3 mb-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">
-                {userName ? userName.substring(0, 1).toUpperCase() : "?"}
+                👤
               </span>
             </div>
-            <span className="font-medium text-sm">Referral</span>
+            <span className="font-medium text-sm text-white">Referral</span>
           </div>
-          <p className="text-indigo-300 text-xs mb-3">2 of 5</p>
-          <button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors">
+          <p className="text-purple-300 text-xs mb-3">2 of 5</p>
+          <button className="w-full bg-purple-600 hover:bg-purple-500 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors">
             Copy referral link
           </button>
         </div>
 
         <button
           onClick={handleLogout}
-          className="flex items-center space-x-2 text-indigo-300 hover:text-white transition-colors w-full py-2 px-3 rounded-lg hover:bg-indigo-700/50"
+          className="flex items-center space-x-3 text-indigo-300 hover:text-white transition-colors w-full py-3 px-4 rounded-xl hover:bg-indigo-700/30"
         >
-          <LogOut className="h-4 w-4" />
-          <span className="text-sm">Logout</span>
+          <LogOut className="h-5 w-5" />
+          <span className="font-medium text-sm">Logout</span>
         </button>
       </div>
     </div>
