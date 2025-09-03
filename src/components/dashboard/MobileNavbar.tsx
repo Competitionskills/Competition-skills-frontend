@@ -13,7 +13,7 @@ const MobileNavbar: React.FC<MobileNavbarProps> = ({
   toggleStats
 }) => {
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-indigo-100 z-20">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-indigo-900/90 backdrop-blur-sm border-t border-indigo-700/30 z-20">
       <div className="flex justify-around items-center px-1 py-2">
         <NavButton 
           icon={<Home className="h-5 w-5" />} 
@@ -67,16 +67,16 @@ const NavButton: React.FC<NavButtonProps> = ({ icon, label, active, onClick }) =
   return (
     <button 
       onClick={onClick}
-      className={`flex flex-col items-center justify-center w-14 py-1 rounded-lg ${
-        active ? 'text-indigo-600' : 'text-gray-500'
+      className={`flex flex-col items-center justify-center w-14 py-2 rounded-xl transition-all ${
+        active ? 'text-cyan-300 bg-cyan-500/20' : 'text-indigo-400 hover:text-white'
       }`}
     >
-      <div className={`${active ? 'text-indigo-600' : 'text-gray-500'}`}>
+      <div className={`${active ? 'text-cyan-300' : 'text-indigo-400'}`}>
         {icon}
       </div>
       <span className="text-xs mt-1 leading-tight">{label}</span>
       {active && (
-        <div className="h-1 w-4 bg-indigo-600 rounded-full mt-1"></div>
+        <div className="h-1 w-6 bg-cyan-400 rounded-full mt-1"></div>
       )}
     </button>
   );
