@@ -11,8 +11,6 @@ import SubmitCode from '../components/submitCode';
 import BuyTickets from '../components/BuyTickets';
 import Referrals from '../components/dashboard/Referrals';
 import Sidebar from '../components/dashboard/Sidebar';
-import ModernSidebar from '../components/dashboard/ModernSidebar';
-import ModernMainContent from '../components/dashboard/ModernMainContent';
 import StatsPanel from '../components/dashboard/StatsPanel';
 import MainContent from '../components/dashboard/MainContent';
 import MobileHeader from '../components/dashboard/MobileHeader';
@@ -152,13 +150,17 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 text-white relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl"></div>
-      </div>
+    <div
+      className="flex flex-col md:flex-row min-h-screen text-gray-800 relative"
+      style={{
+        backgroundImage: `url(${BackgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+    
+      <div className="absolute inset-0 bg-indigo-900/10 backdrop-blur-sm"></div>
 
       <MobileHeader
         userName={userName}
@@ -168,7 +170,7 @@ const Dashboard: React.FC = () => {
         logo={centerLogo}
       />
 
-      <ModernSidebar
+      <Sidebar
         userName={userName}
         userPoints={userPoints}
         userPrestigeTickets={userPrestigeTickets}
@@ -180,7 +182,18 @@ const Dashboard: React.FC = () => {
         closeMobileMenu={() => setMobileMenuOpen(false)}
       />
 
-      <ModernMainContent
+      <StatsPanel
+        userPoints={userPoints}
+        userPrestigeTickets={userPrestigeTickets}
+        isMobileView={mobileStatsOpen}
+        toggleMobileView={toggleMobileStats}
+        loginStatus={loginStatus}
+        updatePoints={handlePointsUpdate}
+        updatePrestigeTickets={updatePrestigeTickets}
+        updateLoginStatus={handleLoginStatusUpdate}
+      />
+
+      <MainContent
         userName={userName}
         activeTab={activeTab}
         userPoints={userPoints}
