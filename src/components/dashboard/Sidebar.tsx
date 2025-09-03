@@ -150,13 +150,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             active={activeTab === 'leaderboard'} 
             onClick={() => handleNavigation('leaderboard')} 
           />
-          <NavItem 
-            icon={<Users />} 
-            text="Referrals" 
-            id="referrals" 
-            active={activeTab === 'referrals'} 
-            onClick={() => handleNavigation('referrals')} 
-          />
+         
           <NavItem 
             icon={<Settings />} 
             text="Settings" 
