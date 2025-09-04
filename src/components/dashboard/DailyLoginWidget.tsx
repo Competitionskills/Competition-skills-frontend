@@ -21,62 +21,60 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({ onRewardClaimed }) 
   const rewards = [0, 10, 20, 30, 40, 50, 60, 100];
 
   // ✅ Fetch daily status
- const fetchDailyStatus = async () => {
-  console.log('[🔄 fetchDailyStatus] Fetching daily login status...');
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.warn('[⚠️ fetchDailyStatus] No token found in localStorage');
-      return;
-    }
+  const fetchDailyStatus = async () => {
+    console.log('[🔄 fetchDailyStatus] Fetching daily login status...');
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.warn('[⚠️ fetchDailyStatus] No token found in localStorage');
+        return;
+      }
 
-    console.log('[📦 fetchDailyStatus] Using token:', token);
+      console.log('[📦 fetchDailyStatus] Using token:', token);
 
-    const url = `https://api.scoreperks.co.uk/api/rewards/daily-login/status`;
-    console.log('[🌐 fetchDailyStatus] Requesting URL:', url);
+      const url = `https://api.scoreperks.co.uk/api/rewards/daily-login/status`;
+      console.log('[🌐 fetchDailyStatus] Requesting URL:', url);
 
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    console.log('[📡 fetchDailyStatus] HTTP Status:', res.status);
-
-    if (!res.ok) {
-      const text = await res.text();
-      console.warn('[⚠️ fetchDailyStatus] Request failed', {
-        status: res.status,
-        responseText: text,
+      const res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-      return;
+
+      console.log('[📡 fetchDailyStatus] HTTP Status:', res.status);
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.warn('[⚠️ fetchDailyStatus] Request failed', {
+          status: res.status,
+          responseText: text,
+        });
+        return;
+      }
+
+      const data = await res.json();
+      console.log('[✅ fetchDailyStatus] Raw response data:', data);
+
+      // Debugging values
+      console.log('[🔍 fetchDailyStatus] claimedToday from backend:', data.claimedToday);
+      console.log('[🔍 fetchDailyStatus] currentStreak from backend:', data.currentStreak);
+
+      // Set streak
+      if (typeof data.currentStreak === 'number') {
+        console.log('[✅ fetchDailyStatus] Setting currentStreak to:', data.currentStreak);
+        setCurrentStreak(data.currentStreak);
+      } else {
+        console.warn('[⚠️ fetchDailyStatus] currentStreak is not a number:', data.currentStreak);
+      }
+
+      // Set claim availability
+      const newCanClaim = !data.claimedToday;
+      console.log('[✅ fetchDailyStatus] Setting canClaim to:', newCanClaim);
+      setCanClaim(newCanClaim);
+    } catch (err) {
+      console.error('[❌ fetchDailyStatus] Error fetching daily status:', err);
     }
-
-    const data = await res.json();
-    console.log('[✅ fetchDailyStatus] Raw response data:', data);
-
-    // Debugging values
-    console.log('[🔍 fetchDailyStatus] claimedToday from backend:', data.claimedToday);
-    console.log('[🔍 fetchDailyStatus] currentStreak from backend:', data.currentStreak);
-
-    // Set streak
-    if (typeof data.currentStreak === 'number') {
-      console.log('[✅ fetchDailyStatus] Setting currentStreak to:', data.currentStreak);
-      setCurrentStreak(data.currentStreak);
-    } else {
-      console.warn('[⚠️ fetchDailyStatus] currentStreak is not a number:', data.currentStreak);
-    }
-
-    // Set claim availability
-    const newCanClaim = !data.claimedToday;
-    console.log('[✅ fetchDailyStatus] Setting canClaim to:', newCanClaim);
-    setCanClaim(newCanClaim);
-
-  } catch (err) {
-    console.error('[❌ fetchDailyStatus] Error fetching daily status:', err);
-  }
-};
-
+  };
 
   // ✅ Handle claim
   const handleClaimReward = async () => {
@@ -104,13 +102,14 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({ onRewardClaimed }) 
         onRewardClaimed(response.reward.points, response.reward.prestigeTickets || 0);
       }
 
-      // Refresh user points
+      // Refresh user points & sync status
       await refreshUser();
-
-      // Optional: Re-fetch daily status to sync with backend
       await fetchDailyStatus();
 
-      setTimeout(() => setShowSuccess(false), 3000);
+      // 👇 Hard refresh after a short pause so success message briefly shows
+      setTimeout(() => {
+        window.location.reload();
+      }, 300);
     } catch (err: any) {
       console.error('[❌ Claim failed]', err);
       setRewardMessage(err?.response?.data?.error || 'Error claiming reward');
@@ -121,14 +120,16 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({ onRewardClaimed }) 
     }
   };
 
-useEffect(() => {
-  console.log('[✅ useEffect] user:', user, 'isUserLoading:', isUserLoading);
-  fetchDailyStatus(); // force-run to debug
-}, []);
+  useEffect(() => {
+    console.log('[✅ useEffect] user:', user, 'isUserLoading:', isUserLoading);
+    fetchDailyStatus(); // force-run to debug
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getNextReward = () => {
     const nextDay = Math.min(currentStreak + 1, 7);
     return rewards[nextDay];
+    // Note: rewards[7] is the 100 points day; ticket messaging handled below.
   };
 
   if (isUserLoading) {
@@ -203,30 +204,32 @@ useEffect(() => {
           )}
         </div>
 
-<button
-  onClick={handleClaimReward}
-  disabled={false} // 👈 Force enabled for debugging
-  className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 flex items-center justify-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transform hover:scale-105 shadow-lg`}
->
-  {isLoading ? (
-    <>
-      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-      <span>Claiming...</span>
-    </>
-  ) : canClaim ? (
-    <>
-      <Gift className="h-5 w-5" />
-      <span>Claim Daily Reward</span>
-    </>
-  ) : (
-    <>
-      <Clock className="h-5 w-5" />
-      <span>Already claimed</span>
-    </>
-  )}
-</button>
-
-
+        <button
+          onClick={handleClaimReward}
+          disabled={!canClaim || isLoading}
+          className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 flex items-center justify-center space-x-2 ${
+            !canClaim || isLoading
+              ? 'bg-gray-300 cursor-not-allowed'
+              : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transform hover:scale-105 shadow-lg'
+          }`}
+        >
+          {isLoading ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <span>Claiming...</span>
+            </>
+          ) : canClaim ? (
+            <>
+              <Gift className="h-5 w-5" />
+              <span>Claim Daily Reward</span>
+            </>
+          ) : (
+            <>
+              <Clock className="h-5 w-5" />
+              <span>Already claimed</span>
+            </>
+          )}
+        </button>
 
         <div className="mt-4 text-center">
           <p className="text-xs text-gray-500">

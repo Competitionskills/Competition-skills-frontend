@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 interface User {
   _id: string;
@@ -13,6 +13,11 @@ interface UserContextType {
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   refreshUser: () => Promise<void>;
   isUserLoading: boolean;
+  // NEW:
+  isReady: boolean;
+  token: string | null;
+  setToken: (t: string | null) => void;
+  logout: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -20,19 +25,30 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isUserLoading, setIsUserLoading] = useState<boolean>(true);
+  const [isReady, setIsReady] = useState<boolean>(false); // finished first hydration (success or fail)
+  const [token, setTokenState] = useState<string | null>(() => localStorage.getItem('token'));
 
-  const refreshUser = async () => {
+  const setToken = (t: string | null) => {
+    if (t) localStorage.setItem('token', t);
+    else localStorage.removeItem('token');
+    setTokenState(t);
+  };
+
+  const logout = () => {
+    setToken(null);
+    setUser(null);
+  };
+
+  const refreshUser = useCallback(async () => {
     console.log('[🔄 RefreshUser] Starting...');
     try {
-      const token = localStorage.getItem('token');
       if (!token) {
-        console.warn('[⚠️ No token found in localStorage]');
+        console.warn('[⚠️ No token found]');
         setUser(null);
-        setIsUserLoading(false);
         return;
       }
+      setIsUserLoading(true);
 
-      // ✅ Updated endpoint to your working route:
       const res = await fetch('https://api.scoreperks.co.uk/api/users/user', {
         method: 'GET',
         headers: {
@@ -57,15 +73,38 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
     } finally {
       setIsUserLoading(false);
+      setIsReady(true); // mark hydration complete
     }
-  };
+  }, [token]);
 
+  // hydrate on mount & whenever token changes
   useEffect(() => {
     refreshUser();
+  }, [refreshUser]);
+
+  // cross-tab token sync (optional)
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'token') setTokenState(localStorage.getItem('token'));
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, setUser, refreshUser, isUserLoading }}>
+    <UserContext.Provider
+      value={{
+        user,
+        setUser,
+        refreshUser,
+        isUserLoading,
+        // NEW provided values:
+        isReady,
+        token,
+        setToken,
+        logout,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );
