@@ -16,7 +16,7 @@ import Sidebar from '../components/dashboard/Sidebar';
 import StatsPanel from '../components/dashboard/StatsPanel';
 import MainContent from '../components/dashboard/MainContent';
 import MobileHeader from '../components/dashboard/MobileHeader';
-import MobileNavbar from '../components/dashboard/MobileNavbar';
+import { MobileNavbar } from '../components/dashboard/MobileNavbar';
 import RewardNotification from '../components/dashboard/RewardNotification';
 
 import { fetchUserProfile } from '../api/userApi';

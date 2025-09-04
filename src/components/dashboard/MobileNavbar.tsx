@@ -7,7 +7,7 @@ interface MobileNavbarProps {
   toggleStats: () => void;
 }
 
-const MobileNavbar: React.FC<MobileNavbarProps> = ({ 
+export const MobileNavbar: React.FC<MobileNavbarProps> = ({ 
   activeTab, 
   handleNavigation,
   toggleStats

@@ -71,7 +71,7 @@ const MainContent: React.FC<MainContentProps> = ({
   updatePrestigeTickets,
   updateLoginStatus,
 }) => {
-  const { user } = useUser();
+ const { user, refreshUser } = useUser();
 
   const [isLoading, setIsLoading] = useState(false);
   const [nextReward, setNextReward] = useState({ points: 100, prestigeTickets: 0 });
@@ -197,32 +197,36 @@ const MainContent: React.FC<MainContentProps> = ({
       if (!res.ok) throw new Error(data?.message || data?.error || "Failed to participate");
 
       // optimistic: append my ticket to this comp
-      const me = (user as any)?._id ?? (user as any)?.id ?? localStorage.getItem("userId");
-      setComps((prev) =>
-        prev.map((k) =>
-          k._id === c._id
-            ? {
-                ...k,
-                participants: [
-                  ...(k.participants ?? []),
-                  ...(data.tickets ?? [{ ticketId: "local", userId: String(me) }]),
-                ],
-              }
-            : k
-        )
-      );
+      // const me = (user as any)?._id ?? (user as any)?.id ?? localStorage.getItem("userId");
+      // setComps((prev) =>
+      //   prev.map((k) =>
+      //     k._id === c._id
+      //       ? {
+      //           ...k,
+      //           participants: [
+      //             ...(k.participants ?? []),
+      //             ...(data.tickets ?? [{ ticketId: "local", userId: String(me) }]),
+      //           ],
+      //         }
+      //       : k
+      //   )
+      // );
 
-      // update prestige tickets immediately if server returned value
-      if (typeof data.remainingTickets === "number") {
-        updatePrestigeTickets(data.remainingTickets);
-      }
+      // // update prestige tickets immediately if server returned value
+      // if (typeof data.remainingTickets === "number") {
+      //   updatePrestigeTickets(data.remainingTickets);
+      // }
 
       setConfirm({ open: false });
 
       // authoritative refresh
+     await refreshUser(); // updates sidebar Points/Tickets correctly
+
       await fetchAll();
 
       alert("Entered successfully!");
+      window.location.reload(); // or setTimeout(() => window.location.reload(), 150);
+
     } catch (e: any) {
       alert(e.message || "Could not participate");
       setConfirm({ open: false });
