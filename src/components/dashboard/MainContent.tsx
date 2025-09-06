@@ -11,6 +11,7 @@ import comp3 from "../../images/competition3.jpg";
 import comp4 from "../../images/competition4.jpg";
 import comp5 from "../../images/competition5.jpg";
 import comp6 from "../../images/competition6.jpg";
+import ParticipationModal from "../participationModal"; // adjust if your path differs
 
 // ===== API + types =====
 const API_BASE = process.env.REACT_APP_API_URL || "https://api.scoreperks.co.uk";
@@ -25,7 +26,8 @@ type Competition = {
   startsAt?: string;
   endsAt: string;
   entryCost: number;
-  status: CompetitionStatus;
+  // 👇 make optional to avoid TS mismatch with modal
+  status?: CompetitionStatus;
   participants?: Participant[];
 };
 
@@ -71,7 +73,7 @@ const MainContent: React.FC<MainContentProps> = ({
   updatePrestigeTickets,
   updateLoginStatus,
 }) => {
- const { user, refreshUser } = useUser();
+  const { user, refreshUser } = useUser();
 
   const [isLoading, setIsLoading] = useState(false);
   const [nextReward, setNextReward] = useState({ points: 100, prestigeTickets: 0 });
@@ -84,7 +86,13 @@ const MainContent: React.FC<MainContentProps> = ({
   // my competitions table
   const [myCompItems, setMyCompItems] = useState<MyCompetitionItem[]>([]);
   const [filter, setFilter] = useState<Filter>("all");
-  const [confirm, setConfirm] = useState<{ open: boolean; comp?: Competition }>({ open: false });
+
+  // ✅ NEW: big participation modal state (INSIDE the component)
+  const [participate, setParticipate] = useState<{ open: boolean; comp: Competition | null }>({
+    open: false,
+    comp: null,
+  });
+  const [submitting, setSubmitting] = useState(false);
 
   // next daily reward
   useEffect(() => {
@@ -164,7 +172,7 @@ const MainContent: React.FC<MainContentProps> = ({
     return filter === "open" ? phase === "open" : phase === "ended";
   });
 
-  // ask/confirm
+  // open modal
   const askParticipate = (c: Competition) => {
     const { isOpen } = getCompetitionPhase({
       _id: c._id,
@@ -173,18 +181,17 @@ const MainContent: React.FC<MainContentProps> = ({
       endsAt: c.endsAt,
     });
     if (!isOpen) return;
-    setConfirm({ open: true, comp: c });
+    setParticipate({ open: true, comp: c });
   };
 
-  // participate flow
-  const doParticipate = async () => {
-    if (!confirm.comp) return;
-    const c = confirm.comp;
-
+  // confirm from modal
+  // (Use a wide param type to avoid type mismatch with the modal)
+  const onConfirmParticipate = async (c: { _id: string }) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) return alert("Please log in first.");
 
+      setSubmitting(true);
       setJoiningId(c._id);
 
       const res = await fetch(`${API_BASE}/api/competitions/${c._id}/participate`, {
@@ -196,41 +203,16 @@ const MainContent: React.FC<MainContentProps> = ({
       const data: ParticipateResponse = await res.json();
       if (!res.ok) throw new Error(data?.message || data?.error || "Failed to participate");
 
-      // optimistic: append my ticket to this comp
-      // const me = (user as any)?._id ?? (user as any)?.id ?? localStorage.getItem("userId");
-      // setComps((prev) =>
-      //   prev.map((k) =>
-      //     k._id === c._id
-      //       ? {
-      //           ...k,
-      //           participants: [
-      //             ...(k.participants ?? []),
-      //             ...(data.tickets ?? [{ ticketId: "local", userId: String(me) }]),
-      //           ],
-      //         }
-      //       : k
-      //   )
-      // );
+      setParticipate({ open: false, comp: null });
 
-      // // update prestige tickets immediately if server returned value
-      // if (typeof data.remainingTickets === "number") {
-      //   updatePrestigeTickets(data.remainingTickets);
-      // }
-
-      setConfirm({ open: false });
-
-      // authoritative refresh
-     await refreshUser(); // updates sidebar Points/Tickets correctly
-
-      await fetchAll();
+      // Soft, authoritative refresh
+      await Promise.all([refreshUser(), fetchAll()]);
 
       alert("Entered successfully!");
-      window.location.reload(); // or setTimeout(() => window.location.reload(), 150);
-
     } catch (e: any) {
-      alert(e.message || "Could not participate");
-      setConfirm({ open: false });
+      alert(e?.message || "Could not participate");
     } finally {
+      setSubmitting(false);
       setJoiningId(null);
     }
   };
@@ -396,29 +378,14 @@ const MainContent: React.FC<MainContentProps> = ({
         </div>
       </main>
 
-      {/* Confirm modal */}
-      {confirm.open && confirm.comp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h4 className="mb-2 text-lg font-semibold text-indigo-900">Confirm participation</h4>
-            <p className="mb-6 text-sm text-gray-600">
-              Are you sure you want to enter <span className="font-semibold text-indigo-900">{confirm.comp.title}</span>{" "}
-              with <span className="font-semibold">1 prestige ticket</span>?
-            </p>
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setConfirm({ open: false })} className="rounded-lg border px-4 py-2 text-sm">
-                Cancel
-              </button>
-              <button
-                onClick={doParticipate}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-              >
-                Yes, participate
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Participation modal */}
+      <ParticipationModal
+        open={participate.open}
+        competition={participate.comp}
+        onClose={() => setParticipate({ open: false, comp: null })}
+        onConfirm={(c) => onConfirmParticipate(c)} // c only needs _id
+        isSubmitting={submitting}
+      />
     </div>
   );
 };
