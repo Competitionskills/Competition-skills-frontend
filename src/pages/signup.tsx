@@ -181,6 +181,8 @@ setError("Please fill in all required fields.");
               type="text"
               name="postCode"
               placeholder="Post Code"
+  pattern="^[A-Za-z]{1,2}[0-9Rr][0-9A-Za-z]? ?[0-9][A-Za-z]{2}$"
+
               className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={formData.postCode}
               onChange={handleChange}
