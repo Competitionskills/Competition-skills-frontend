@@ -1,17 +1,8 @@
 import React from 'react';
-import { 
-  Trophy, 
-  Award, 
-  Ticket,
-  Code, 
-  Settings, 
-  LogOut, 
-  Home, 
-  Users,
-  X,
-  Star,
-  Crown,
-} from 'lucide-react';
+import {
+  Trophy, Award, Ticket, Code, Settings, LogOut, Home, Users, X, Star, Crown, Medal
+} from "lucide-react";
+
 
 interface SidebarProps {
   userName: string | null;
@@ -67,7 +58,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Profile Section */}
-      <div className="px-4 py-4">
+      {/* <div className="px-4 py-4">
         <div className="flex flex-col p-4 bg-indigo-500/30 rounded-xl mb-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-2">
             <Crown className="h-5 w-5 text-yellow-300 animate-pulse" />
@@ -97,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
       
       {/* Navigation */}
       <div className="flex-1 px-4 overflow-y-auto">
@@ -122,6 +113,9 @@ const Sidebar: React.FC<SidebarProps> = ({
               Coming soon
             </span>
           </div>
+          <NavItem icon={<Medal />} text="Competitions" id="competitions"
+           active={activeTab === "competitions"}
+           onClick={() => handleNavigation("competitions")} />
           <NavItem 
             icon={<Ticket />} 
             text="Buy Tickets" 
@@ -151,14 +145,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => handleNavigation('leaderboard')} 
           />
          
-          <NavItem 
-            icon={<Settings />} 
-            text="Settings" 
-            id="settings" 
-            active={activeTab === 'settings'} 
-            onClick={() => handleNavigation('settings')} 
-          />
-        </nav>
+       <NavItem icon={<Settings />} text="Settings" id="settings"
+           active={activeTab === "settings"}
+           onClick={() => handleNavigation("settings")} />
+</nav>
       </div>
       
       {/* Logout Button */}

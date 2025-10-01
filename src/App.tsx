@@ -15,7 +15,10 @@ import { UserProvider } from "./context/userContext";
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import AdminCompetitionsPage from "./pages/admin/adminCompetitionPage";
+import AdminCodePage from "./pages/admin/AdminCodePage";
+import AdminPage from "./pages/admin/adminDashboard";
 import Results from "./pages/Result";
+import Settings from "./pages/settings";
 // ✅ Replace with your own publishable key
 const stripePromise = loadStripe('pk_test_51RmhOCFW9n2BdCkE7OqPEUVIRv0iMx3GOMOxoOBW1jlYoJuUD44B5hEXV3MsPJF8bTLdmBI2d1OqFMJudP87R2wj00D3IxvMDR');
 
@@ -40,10 +43,14 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/competitions" element={<Competitions />} />
         <Route path="/adminCompetitionPage" element={<AdminCompetitionsPage />} />
+        <Route path="/adminCodePage" element={<AdminCodePage />} />
+        <Route path="/adminDashboard" element={<AdminPage />} />
         <Route path="/Leaderboard" element={<Leaderboard />} />
         <Route path="/verify-email" element={<VerifyEmail/>} />
         <Route path="/reset-password" element={<ResetPassword/>} />
         <Route path="/results/:id" element={<Results />} />
+       <Route path="/settings" element={<Settings />} />
+
 
 
       </Routes>

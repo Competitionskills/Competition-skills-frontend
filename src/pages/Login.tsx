@@ -3,14 +3,18 @@ import { useNavigate, Link } from "react-router-dom";
 import ForgotPasswordModal from "../components/ForgotPasswordModal";
 import "../styles/animations.css";
 import { api, setAuthToken } from "../helpers/axios";
+import { useUser } from "../context/userContext"; // ✅ use context
 
-const SignIn = () => {
+const SignIn: React.FC = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+
+  // ✅ from context
+  const { setToken, refreshUser, /* optional if you added it */ setTokenAndRefresh } = useUser() as any;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -21,47 +25,54 @@ const SignIn = () => {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
-  
+
     if (!form.email || !form.password) {
       setError("Please enter both email and password.");
       setIsSubmitting(false);
       return;
     }
-  
+
     try {
       const response = await api.post("/users/login", form);
-  
-      if (response.data.token) {
-        setAuthToken(response.data.token);
-        localStorage.setItem("token", response.data.token);
-        navigate("/dashboard");
-      } else {
-        console.error("❌ Token not found in response");
+      const token: string | undefined = response?.data?.token;
+
+      if (!token) {
         setError("Login failed. No token received.");
+        setIsSubmitting(false);
+        return;
       }
+
+      // 1) Set header for immediate API calls
+      setAuthToken(token);
+      // 2) Persist in localStorage via context
+      if (typeof setTokenAndRefresh === "function") {
+        // Preferred: hydrate user BEFORE navigate
+        await setTokenAndRefresh(token);
+      } else {
+        // Fallback if you didn't add setTokenAndRefresh
+        setToken(token);
+        await refreshUser();
+      }
+
+      // 3) Navigate once user context is ready
+      navigate("/dashboard");
     } catch (error: any) {
       console.error("❌ Login Error:", error);
+
       const formElement = document.getElementById("loginForm");
       if (formElement) {
         formElement.classList.add("animate-shake");
         setTimeout(() => formElement.classList.remove("animate-shake"), 500);
       }
-  
-      if (error.response) {
+
+      if (error?.response) {
         const status = error.response.status;
-  
-        if (status === 401) {
-          setError("Incorrect email or password. Please try again.");
-        } else if (status === 404) {
-          setError("Account not found with this email address.");
-        } else if (status === 403) {
-          setError("Your account has been locked. Please contact support.");
-        } else if (status === 429) {
-          setError("Too many login attempts. Please try again later.");
-        } else {
-          setError(error.response.data?.message || "Login failed. Please check your credentials.");
-        }
-      } else if (error.request) {
+        if (status === 401)       setError("Incorrect email or password. Please try again.");
+        else if (status === 404)  setError("Account not found with this email address.");
+        else if (status === 403)  setError("Your account has been locked. Please contact support.");
+        else if (status === 429)  setError("Too many login attempts. Please try again later.");
+        else                      setError(error.response.data?.message || "Login failed. Please check your credentials.");
+      } else if (error?.request) {
         setError("Network error. Please check your connection and try again.");
       } else {
         setError("An unexpected error occurred. Please try again later.");
@@ -70,11 +81,11 @@ const SignIn = () => {
       setIsSubmitting(false);
     }
   };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-400 via-indigo-500 to-blue-700 py-6 px-4 sm:py-12">
       <div className="flex flex-col md:flex-row w-full max-w-4xl bg-white rounded-lg shadow-xl overflow-hidden">
-        
-        {/* Sign In Form - Full width on mobile, half width on desktop */}
+        {/* Form */}
         <div className="w-full md:w-1/2 p-6 sm:p-8 md:p-10 flex flex-col justify-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">Sign in</h2>
           <form id="loginForm" onSubmit={handleSubmit}>
@@ -112,6 +123,7 @@ const SignIn = () => {
                 Show Password
               </label>
             </div>
+
             {error && (
               <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4 animate-fadeIn">
                 <p className="text-red-700 text-sm">{error}</p>
@@ -125,8 +137,9 @@ const SignIn = () => {
             >
               {isSubmitting ? "Signing in..." : "Sign in"}
             </button>
+
             <p className="text-sm text-right mt-4">
-              <button 
+              <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}
                 className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
@@ -137,7 +150,7 @@ const SignIn = () => {
           </form>
         </div>
 
-        {/* Welcome Message - Full width on mobile, half width on desktop */}
+        {/* Right side */}
         <div className="w-full md:w-1/2 bg-gradient-to-br from-indigo-700/90 to-indigo-900/90 text-white p-6 sm:p-8 md:p-10 flex flex-col justify-center">
           <h2 className="text-2xl sm:text-3xl font-bold">Welcome back to ScorePerk!</h2>
           <p className="mt-4 text-md font-medium">
@@ -152,10 +165,7 @@ const SignIn = () => {
         </div>
       </div>
 
-      <ForgotPasswordModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-      />
+      <ForgotPasswordModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 };

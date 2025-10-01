@@ -11,6 +11,8 @@ import SubmitCode from '../components/submitCode';
 import BuyTickets from '../components/BuyTickets';
 import Referrals from '../components/dashboard/Referrals';
 import Sidebar from '../components/dashboard/Sidebar';
+import { LeaderboardMini } from '../components/dashboard/leaderboardMini';
+
 
 
 import StatsPanel from '../components/dashboard/StatsPanel';
@@ -34,6 +36,7 @@ const Dashboard: React.FC = () => {
   const [showReferrals, setShowReferrals] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileStatsOpen, setMobileStatsOpen] = useState(false);
+const openSubmitCode = () => setShowSubmitCode(true);
 
   const [userName, setUserName] = useState<string | null>(null);
   const [userPoints, setUserPoints] = useState(0);
@@ -54,42 +57,42 @@ const Dashboard: React.FC = () => {
   });
 
   // Load profile and daily login info
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
+  // useEffect(() => {
+  //   const token = localStorage.getItem('token');
+  //   if (!token) {
+  //     navigate('/login');
+  //     return;
+  //   }
 
-    setAuthToken(token);
+  //   setAuthToken(token);
 
-    const fetchData = async () => {
-      try {
-        const userData = await fetchUserProfile();
-        setUserName(userData.username);
-        setUserPoints(userData.points);
-        setUserTickets(userData.tickets);
-        setUserPrestigeTickets(userData.prestigeTickets);
+  //   const fetchData = async () => {
+  //     try {
+  //       const userData = await fetchUserProfile();
+  //       setUserName(userData.username);
+  //       setUserPoints(userData.points);
+  //       setUserTickets(userData.tickets);
+  //       setUserPrestigeTickets(userData.prestigeTickets);
 
-        // Mock login status for now since API endpoint doesn't exist
-        setLoginStatus({
-          currentStreak: 3,
-          lastClaimDate: new Date().toISOString(),
-          claimedToday: false,
-          daysUntilPrestigeTicket: 4
-        });
-      } catch (error: any) {
-        console.error('Error fetching user data:', error);
-        // Redirect only if backend really says unauthorized
-        if (error?.response?.status === 401 || error?.message === 'Unauthorized') {
-          localStorage.removeItem('token');
-          navigate('/login');
-        }
-      }
-    };
+  //       // Mock login status for now since API endpoint doesn't exist
+  //       setLoginStatus({
+  //         currentStreak: 3,
+  //         lastClaimDate: new Date().toISOString(),
+  //         claimedToday: false,
+  //         daysUntilPrestigeTicket: 4
+  //       });
+  //     } catch (error: any) {
+  //       console.error('Error fetching user data:', error);
+  //       // Redirect only if backend really says unauthorized
+  //       if (error?.response?.status === 401 || error?.message === 'Unauthorized') {
+  //         localStorage.removeItem('token');
+  //         navigate('/login');
+  //       }
+  //     }
+  //   };
 
-    fetchData();
-  }, [navigate]);
+  //   fetchData();
+  // }, [navigate]);
 
   // Ticket purchase handler
   const handleTicketPurchase = (pointsSpent: number, ticketsQuantity: number) => {
@@ -135,6 +138,10 @@ const Dashboard: React.FC = () => {
   const handleNavigation = (tab: string) => {
     if (tab === 'leaderboard') {
       navigate('/leaderboard');
+      } else if (tab === 'competitions') {
+    navigate('/competitions');            // ✅ competitions page
+  } else if (tab === 'settings') {
+    navigate('/settings');          
     } else if (tab === 'buy-tickets') {
       setShowBuyTickets(true);
     } else if (tab === 'referrals') {
@@ -184,7 +191,7 @@ const Dashboard: React.FC = () => {
         closeMobileMenu={() => setMobileMenuOpen(false)}
       />
 
-      <StatsPanel
+      {/* <StatsPanel
         userPoints={userPoints}
         userPrestigeTickets={userPrestigeTickets}
         isMobileView={mobileStatsOpen}
@@ -193,7 +200,7 @@ const Dashboard: React.FC = () => {
         updatePoints={handlePointsUpdate}
         updatePrestigeTickets={updatePrestigeTickets}
         updateLoginStatus={handleLoginStatusUpdate}
-      />
+      /> */}
 
       <MainContent
         userName={userName}
@@ -204,6 +211,8 @@ const Dashboard: React.FC = () => {
         updatePoints={handlePointsUpdate}
         updatePrestigeTickets={updatePrestigeTickets}
         updateLoginStatus={handleLoginStatusUpdate}
+           onOpenSubmitCode={openSubmitCode}
+
       />
 
       <MobileNavbar
