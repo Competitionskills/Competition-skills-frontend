@@ -17,8 +17,8 @@ import { LeaderboardMini } from "./leaderboardMini";
 import { Star, Ticket as TicketIcon, Users, KeyRound, ChevronLeft, ChevronRight } from "lucide-react";
 
 /* ============================ API base ============================ */
-const API_BASE =
-  process.env.REACT_APP_API_URL ?? "https://api.scoreperks.co.uk/api";
+export const API_BASE =
+  process.env.REACT_APP_API_URL || "https://api.scoreperks.co.uk/api";
 
 /* ============================== Types ============================= */
 type CompetitionStatus = "open" | "closed";
@@ -331,36 +331,41 @@ const fetchAll = useCallback(async (signal?: AbortSignal) => {
     setParticipate({ open: true, comp: c });
   };
 
-  const onConfirmParticipate = async (c: { _id: string }) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return alert("Please log in first.");
-
-      setSubmitting(true);
-      setJoiningId(c._id);
-
-      const res = await fetch(`${API_BASE}/competitions/${c._id}/participate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ ticketCount: 1 }),
-      });
-
-      const data: ParticipateResponse = await res.json();
-      if (!res.ok) throw new Error(data?.message || data?.error || "Failed to participate");
-
-      setParticipate({ open: false, comp: null });
-      await fetchAll();
-      alert("Entered successfully!");
-    } catch (e: any) {
-      alert(e?.message || "Could not participate");
-    } finally {
-      setSubmitting(false);
-      setJoiningId(null);
+const onConfirmParticipate = async (c: { _id: string }) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      // keep using alert for auth issues if you want
+      alert("Please log in first.");
+      return;
     }
-  };
+
+    setSubmitting(true);
+    setJoiningId(c._id);
+
+    const res = await fetch(`${API_BASE}/competitions/${c._id}/participate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ ticketCount: 1 }),
+    });
+
+    const data: ParticipateResponse = await res.json();
+    if (!res.ok) throw new Error(data?.message || data?.error || "Failed to participate");
+
+    // ✅ Do NOT close the modal and do NOT alert here.
+    // ParticipationModal will flip to its success screen when onConfirm resolves.
+    await fetchAll(); // refresh the list while the success screen shows
+  } catch (e: any) {
+    // You can still surface errors
+    alert(e?.message || "Could not participate");
+    throw e; // let the modal keep the form phase
+  } finally {
+    setSubmitting(false);
+    setJoiningId(null);
+  }
+};
+
+
 
   /* ------------------ Daily login: optimistic UI ------------------ */
   const handleClaimDaily = async (pointsAwarded: number, ticketsAwarded: number) => {
@@ -595,13 +600,15 @@ const fetchAll = useCallback(async (signal?: AbortSignal) => {
       </main>
 
       {/* Participation modal */}
-      <ParticipationModal
-        open={participate.open}
-        competition={participate.comp}
-        onClose={() => setParticipate({ open: false, comp: null })}
-        onConfirm={(c) => onConfirmParticipate(c)}
-        isSubmitting={submitting}
-      />
+     <ParticipationModal
+  open={participate.open}
+  competition={participate.comp}
+  onClose={() => setParticipate({ open: false, comp: null })}
+  onConfirm={(c) => onConfirmParticipate(c)}   // should resolve or throw
+  isSubmitting={submitting}
+/>
+
+
     </div>
   );
 };
