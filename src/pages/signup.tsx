@@ -1,14 +1,30 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { motion } from "framer-motion";
 import { Trophy, Gamepad, Gift, Medal } from "lucide-react";
 import api from "../helpers/axios";
 import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
 
+/** Normalize and validate UK postcode */
+function normalizeUKPostcode(input: string) {
+  // remove non-alphanumerics, uppercase
+  const raw = (input || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  // incode = last 3 chars, outcode = the rest
+  if (raw.length < 5) return null;
+  const incode = raw.slice(-3);
+  const outcode = raw.slice(0, raw.length - 3);
+  return `${outcode} ${incode}`.trim();
+}
 
-
+function isValidUKPostcode(input: string) {
+  const normalized = normalizeUKPostcode(input);
+  if (!normalized) return false;
+  // Royal Mail–style regex (handles GIR 0AA and standard formats)
+  const re =
+    /^((GIR 0AA)|((([A-Z][0-9]{1,2})|(([A-Z][A-HJ-Y][0-9]{1,2})|(([A-Z][0-9][A-Z])|([A-Z][A-HJ-Y][0-9]?[A-Z])))) [0-9][A-Z]{2}))$/i;
+  return re.test(normalized);
+}
 
 const Signup = () => {
   const location = useLocation();
@@ -25,16 +41,15 @@ const Signup = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
- React.useEffect(() => {
-  const params = new URLSearchParams(location.search);
-  const refCode = params.get("ref");
-  if (refCode) {
-    setFormData((prev) => ({
-      ...prev,
-      referralCode: refCode,
-    }));
-  }
-}, [location.search]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const refCode = params.get("ref");
+    if (refCode) {
+      setFormData((prev) => ({ ...prev, referralCode: refCode }));
+    }
+  }, [location.search]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -47,8 +62,7 @@ const Signup = () => {
     const { fullName, username, email, password, postCode, phone } = formData;
 
     if (!fullName || !username || !email || !password || !postCode || !phone) {
-setError("Please fill in all required fields.");
-
+      setError("Please fill in all required fields.");
       return false;
     }
     if (!/^\S+@\S+\.\S+$/.test(email)) {
@@ -59,21 +73,22 @@ setError("Please fill in all required fields.");
       setError("Password must be at least 6 characters long.");
       return false;
     }
-    if (!/^\d+$/.test(postCode)) {
-      setError("Post code must be a number.");
+    // ✅ UK postcode validation
+    if (!isValidUKPostcode(postCode)) {
+      setError("Please enter a valid UK postcode (e.g. SW1A 1AA).");
       return false;
     }
-     const phoneWithPlus = phone.startsWith("+") ? phone : `+${phone}`;
+    // Ensure phone is E.164-ish
+    const phoneWithPlus = phone.startsWith("+") ? phone : `+${phone}`;
     const cleanedPhone = phoneWithPlus.replace(/\s+/g, "");
-
     if (!/^\+[1-9]\d{1,14}$/.test(cleanedPhone)) {
-      setError("Phone number must be valid and in international format, e.g. +447911123456");
+      setError("Phone must be valid and in international format, e.g. +447911123456");
       return false;
     }
 
     setError("");
     return true;
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,14 +98,16 @@ setError("Please fill in all required fields.");
     setMessage("");
     setError("");
 
-    // Remove spaces and make sure it starts with +
+    // normalize phone & postcode just before sending
     const cleanedPhone = formData.phone.replace(/\s+/g, "");
     const finalPhone = cleanedPhone.startsWith("+") ? cleanedPhone : `+${cleanedPhone}`;
+    const finalPostcode = normalizeUKPostcode(formData.postCode) || formData.postCode.trim().toUpperCase();
 
     try {
       const response = await api.post("/users/register", {
         ...formData,
         phone: finalPhone,
+        postCode: finalPostcode,
       });
 
       setMessage("Registration successful! Please check your email to verify your account.");
@@ -98,8 +115,8 @@ setError("Please fill in all required fields.");
       console.error("❌ Signup Error:", error);
       setError(
         error?.response?.data?.message ||
-        error?.message ||
-        "Signup failed. Please try again."
+          error?.message ||
+          "Signup failed. Please try again."
       );
     } finally {
       setLoading(false);
@@ -116,7 +133,7 @@ setError("Please fill in all required fields.");
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
           {message && <p className="text-green-500 text-center mb-4">{message}</p>}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             <input
               type="text"
               name="fullName"
@@ -124,6 +141,7 @@ setError("Please fill in all required fields.");
               className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={formData.fullName}
               onChange={handleChange}
+              required
             />
 
             <input
@@ -133,6 +151,7 @@ setError("Please fill in all required fields.");
               className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={formData.username}
               onChange={handleChange}
+              required
             />
 
             <input
@@ -142,6 +161,7 @@ setError("Please fill in all required fields.");
               className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={formData.email}
               onChange={handleChange}
+              required
             />
 
             <div className="relative">
@@ -150,21 +170,19 @@ setError("Please fill in all required fields.");
                 value={formData.phone}
                 onChange={handlePhoneChange}
                 inputStyle={{
-                  width: '100%',
-                  height: '48px',
-                  fontSize: '16px',
-                  borderRadius: '0.5rem',
-                  backgroundColor: 'rgb(249 250 251)',
-                  borderColor: 'rgb(229 231 235)',
+                  width: "100%",
+                  height: "48px",
+                  fontSize: "16px",
+                  borderRadius: "0.5rem",
+                  backgroundColor: "rgb(249 250 251)",
+                  borderColor: "rgb(229 231 235)",
                 }}
                 buttonStyle={{
-                  backgroundColor: 'transparent',
-                  borderColor: 'rgb(229 231 235)',
-                  borderRight: 'none',
+                  backgroundColor: "transparent",
+                  borderColor: "rgb(229 231 235)",
+                  borderRight: "none",
                 }}
-                dropdownStyle={{
-                  width: '300px',
-                }}
+                dropdownStyle={{ width: "300px" }}
               />
             </div>
 
@@ -175,17 +193,21 @@ setError("Please fill in all required fields.");
               className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={formData.password}
               onChange={handleChange}
+              required
+              minLength={6}
             />
 
             <input
               type="text"
               name="postCode"
-              placeholder="Post Code"
-  pattern="^[A-Za-z]{1,2}[0-9Rr][0-9A-Za-z]? ?[0-9][A-Za-z]{2}$"
-
+              placeholder="Post Code (e.g. SW1A 1AA)"
               className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={formData.postCode}
               onChange={handleChange}
+              // optional HTML validation hint (accepts space optional)
+              pattern="^((GIR 0AA)|((([A-Za-z][0-9]{1,2})|(([A-Za-z][A-HJ-Y][0-9]{1,2})|(([A-Za-z][0-9][A-Za-z])|([A-Za-z][A-HJ-Y][0-9]?[A-Za-z]))))\s?[0-9][A-Za-z]{2}))$"
+              title="Enter a valid UK postcode, e.g. SW1A 1AA"
+              required
             />
 
             <input
@@ -201,7 +223,7 @@ setError("Please fill in all required fields.");
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               type="submit"
-              className="w-full bg-gradient-to-br from-indigo-700/90 to-indigo-900/90 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              className="w-full bg-gradient-to-br from-indigo-700/90 to-indigo-900/90 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60"
               disabled={loading}
             >
               {loading ? "Signing Up..." : "Start Your Journey"}
