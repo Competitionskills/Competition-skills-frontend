@@ -1,7 +1,9 @@
+// src/pages/Competitions.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import Header from "../components/Header";
 import { Footer } from "../components/footer";
 import BackgroundImage from "../images/background-img.jpg";
+
 // CRA env (no import.meta)
 const API_BASE = process.env.REACT_APP_API_URL || "https://api.scoreperks.co.uk";
 
@@ -51,7 +53,10 @@ const ParticipateModal: React.FC<{
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
 
-  useEffect(() => { if (open) { setQty(1); setErr(null); setOk(null); } }, [open]);
+  useEffect(() => {
+    if (open) { setQty(1); setErr(null); setOk(null); }
+  }, [open]);
+
   if (!open || !competition) return null;
 
   const submit = async () => {
@@ -65,7 +70,9 @@ const ParticipateModal: React.FC<{
       onSuccess();
     } catch (e: any) {
       setErr(e.message || "Failed to participate");
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -75,6 +82,7 @@ const ParticipateModal: React.FC<{
           <h2 className="text-lg font-semibold">Participate in {competition.title}</h2>
           <button onClick={onClose} className="rounded px-2 py-1 text-sm hover:bg-gray-100">✕</button>
         </div>
+
         {err && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{err}</div>}
         {ok &&  <div className="mb-3 rounded-lg bg-green-50 p-3 text-sm text-green-700">{ok}</div>}
 
@@ -83,7 +91,7 @@ const ParticipateModal: React.FC<{
           type="number"
           min={1}
           value={qty}
-          onChange={(e) => setQty(Math.max(1, parseInt(e.target.value || "1")))}
+          onChange={(e) => setQty(Math.max(1, parseInt(e.target.value || "1", 10)))}
           className="mb-3 w-full rounded-lg border p-2"
         />
         <p className="mb-4 text-sm text-gray-600">
@@ -117,88 +125,133 @@ const CompetitionsPage: React.FC = () => {
       setList(data);
     } catch (e: any) {
       setError(e.message || "Failed to load");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { fetchAll(filter); }, [filter]);
+  useEffect(() => { fetchAll(filter); }, [filter]); // eslint-disable-line
 
-  const cards = useMemo(() => list.map(c => (
-    <div key={c._id} className="rounded-2xl border bg-white p-4 shadow-sm">
-      <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-lg font-semibold">{c.title}</h3>
-        <span className={
-          c.status === "open"
-            ? "rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700"
-            : "rounded-full bg-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-700"
-        }>
-          {c.status}
-        </span>
-      </div>
-      <p className="mb-3 line-clamp-2 text-sm text-gray-600">{c.description || "No description."}</p>
-      <div className="mb-3 grid grid-cols-2 gap-3 text-sm">
-        <div className="rounded-lg bg-indigo-50 p-3">
-          <div className="text-indigo-900">Ends</div>
-          <div className="font-semibold text-indigo-700">{new Date(c.endsAt).toLocaleString()}</div>
+  const cards = useMemo(
+    () =>
+      list.map((c) => (
+        <div key={c._id} className="rounded-2xl border bg-white p-4 shadow-sm">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-lg font-semibold">{c.title}</h3>
+            <span
+              className={
+                c.status === "open"
+                  ? "rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700"
+                  : "rounded-full bg-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-700"
+              }
+            >
+              {c.status}
+            </span>
+          </div>
+
+          <p className="mb-3 line-clamp-2 text-sm text-gray-600">
+            {c.description || "No description."}
+          </p>
+
+          <div className="mb-3 grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-lg bg-indigo-50 p-3">
+              <div className="text-indigo-900">Ends</div>
+              <div className="font-semibold text-indigo-700">
+                {new Date(c.endsAt).toLocaleString()}
+              </div>
+            </div>
+            <div className="rounded-lg bg-indigo-50 p-3">
+              <div className="text-indigo-900">Time left</div>
+              <div className="font-semibold text-indigo-700">{timeLeft(c.endsAt)}</div>
+            </div>
+            <div className="rounded-lg bg-gray-50 p-3">
+              <div className="text-gray-900">Entry cost</div>
+              <div className="font-semibold text-gray-700">{c.entryCost} prestige ticket(s)</div>
+            </div>
+            <div className="rounded-lg bg-gray-50 p-3">
+              <div className="text-gray-900">Max per user</div>
+              <div className="font-semibold text-gray-700">
+                {c.maxTicketsPerUser || "Unlimited"}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-gray-500">
+              Entries: {c.participants?.length ?? 0}
+            </div>
+            <button
+              disabled={c.status !== "open"}
+              onClick={() => setSelected(c)}
+              className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {c.status === "open" ? "Participate" : "Closed"}
+            </button>
+          </div>
         </div>
-        <div className="rounded-lg bg-indigo-50 p-3">
-          <div className="text-indigo-900">Time left</div>
-          <div className="font-semibold text-indigo-700">{timeLeft(c.endsAt)}</div>
-        </div>
-        <div className="rounded-lg bg-gray-50 p-3">
-          <div className="text-gray-900">Entry cost</div>
-          <div className="font-semibold text-gray-700">{c.entryCost} prestige ticket(s)</div>
-        </div>
-        <div className="rounded-lg bg-gray-50 p-3">
-          <div className="text-gray-900">Max per user</div>
-          <div className="font-semibold text-gray-700">{c.maxTicketsPerUser || "Unlimited"}</div>
-        </div>
-      </div>
-      <div className="flex items-center justify-between">
-        <div className="text-xs text-gray-500">Entries: {c.participants?.length ?? 0}</div>
-        <button
-          disabled={c.status !== "open"}
-          onClick={() => setSelected(c)}
-          className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {c.status === "open" ? "Participate" : "Closed"}
-        </button>
-      </div>
-    </div>
-  )), [list]);
+      )),
+    [list]
+  );
 
   return (
-    <div className="mx-auto max-w-6xl p-4 md:p-8">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Competitions</h1>
-          <p className="text-sm text-gray-500">Join any open competition.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {(["open","closed","all"] as const).map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`rounded-full px-3 py-1.5 text-sm ${filter===f ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
-            >
-              {f[0].toUpperCase()+f.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
+    <div className="min-h-screen flex flex-col">
+      {/* Same header as Settings */}
+      <Header />
 
-      {loading && <div className="rounded-lg border p-6">Loading…</div>}
-      {error && <div className="rounded-lg border border-red-300 bg-red-50 p-6 text-red-700">{error}</div>}
+      {/* Same background treatment as Settings/Leaderboard */}
+      <div
+        className="relative flex-grow bg-cover bg-center"
+        style={{ backgroundImage: `url(${BackgroundImage})` }}
+      >
+        <div className="absolute inset-0 bg-indigo-900/10 backdrop-blur-sm" />
 
-      {!loading && !error && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {cards}
-          {cards.length === 0 && (
-            <div className="col-span-full rounded-xl border p-8 text-center text-sm text-gray-500">
-              No competitions found.
+        <div className="relative mx-auto w-full max-w-6xl p-4 md:p-8">
+          {/* Page title + filter pills */}
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">Competitions</h1>
+              <p className="text-sm text-gray-600">Join any open competition.</p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {(["open", "closed", "all"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`rounded-full px-3 py-1.5 text-sm ${
+                    filter === f
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white text-indigo-700 border border-indigo-200 hover:bg-indigo-50"
+                  }`}
+                >
+                  {f[0].toUpperCase() + f.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Content */}
+          {loading && <div className="rounded-xl border bg-white/70 p-6">Loading…</div>}
+          {error && (
+            <div className="rounded-xl border border-red-300 bg-red-50 p-6 text-red-700">
+              {error}
+            </div>
+          )}
+
+          {!loading && !error && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {cards}
+              {cards.length === 0 && (
+                <div className="col-span-full rounded-xl border bg-white/70 p-8 text-center text-sm text-gray-600">
+                  No competitions found.
+                </div>
+              )}
             </div>
           )}
         </div>
-      )}
+      </div>
+
+      <Footer />
 
       <ParticipateModal
         open={!!selected}
@@ -206,10 +259,8 @@ const CompetitionsPage: React.FC = () => {
         competition={selected}
         onSuccess={() => fetchAll(filter)}
       />
-
     </div>
   );
 };
 
 export default CompetitionsPage;
-
