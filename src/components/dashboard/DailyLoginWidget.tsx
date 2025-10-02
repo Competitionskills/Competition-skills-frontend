@@ -25,7 +25,9 @@ const dayDiffUTC = (a: Date, b: Date) => {
   return Math.round((au - bu) / 86400000);
 };
 
-const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({ onRewardClaimed }) => {
+const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({
+  onRewardClaimed,
+}) => {
   const { user, isUserLoading, refreshUser } = useUser();
 
   const [currentStreak, setCurrentStreak] = useState<number>(0);
@@ -34,7 +36,11 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({ onRewardClaimed }) 
   const [status, setStatus] = useState<FetchState>("loading");
 
   // Inline banner (always visible; not absolute)
-  const [banner, setBanner] = useState<{ show: boolean; text: string; kind: BannerKind }>({
+  const [banner, setBanner] = useState<{
+    show: boolean;
+    text: string;
+    kind: BannerKind;
+  }>({
     show: false,
     text: "",
     kind: "success",
@@ -46,47 +52,45 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({ onRewardClaimed }) 
   };
 
   /** Fetch status and normalize streak if it broke */
-  const fetchDailyStatus = useCallback(
-    async (signal?: AbortSignal) => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setStatus("error");
-        return;
+  const fetchDailyStatus = useCallback(async (signal?: AbortSignal) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setStatus("error");
+      return;
+    }
+
+    try {
+      setStatus("loading");
+      const res = await fetch(`${API_BASE}/rewards/daily-login/status`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal,
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      const rawStreak = Number(data?.currentStreak ?? 0);
+      const claimedToday = Boolean(data?.claimedToday);
+      const lastClaimDateStr: string | undefined =
+        data?.lastClaimDate || data?.LastClaimDate;
+
+      let displayStreak = Number.isFinite(rawStreak) ? rawStreak : 0;
+
+      // 👇 If streak was broken (missed one or more whole days), show 0 so the next claim becomes 1.
+      if (!claimedToday && lastClaimDateStr) {
+        const last = new Date(lastClaimDateStr);
+        const today = new Date();
+        const diff = dayDiffUTC(today, last); // e.g. 0=today, 1=yesterday, 2+=missed a day
+        if (diff >= 2) displayStreak = 0;
       }
 
-      try {
-        setStatus("loading");
-        const res = await fetch(`${API_BASE}/rewards/daily-login/status`, {
-          headers: { Authorization: `Bearer ${token}` },
-          signal,
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-
-        const rawStreak = Number(data?.currentStreak ?? 0);
-        const claimedToday = Boolean(data?.claimedToday);
-        const lastClaimDateStr: string | undefined = data?.lastClaimDate || data?.LastClaimDate;
-
-        let displayStreak = Number.isFinite(rawStreak) ? rawStreak : 0;
-
-        // 👇 If streak was broken (missed one or more whole days), show 0 so the next claim becomes 1.
-        if (!claimedToday && lastClaimDateStr) {
-          const last = new Date(lastClaimDateStr);
-          const today = new Date();
-          const diff = dayDiffUTC(today, last); // e.g. 0=today, 1=yesterday, 2+=missed a day
-          if (diff >= 2) displayStreak = 0;
-        }
-
-        setCurrentStreak(displayStreak);
-        setCanClaim(!claimedToday);
-        setStatus("ready");
-      } catch (err: any) {
-        if (err?.name === "AbortError") return;
-        setStatus("error");
-      }
-    },
-    []
-  );
+      setCurrentStreak(displayStreak);
+      setCanClaim(!claimedToday);
+      setStatus("ready");
+    } catch (err: any) {
+      if (err?.name === "AbortError") return;
+      setStatus("error");
+    }
+  }, []);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -110,7 +114,10 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({ onRewardClaimed }) 
       const resp: DailyLoginResponse = await claimDailyReward();
 
       setCurrentStreak(resp?.streak ?? currentStreak + 1);
-      onRewardClaimed?.(resp?.reward?.points ?? 0, resp?.reward?.prestigeTickets ?? 0);
+      onRewardClaimed?.(
+        resp?.reward?.points ?? 0,
+        resp?.reward?.prestigeTickets ?? 0
+      );
 
       await refreshUser();
       await fetchDailyStatus();
@@ -118,7 +125,9 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({ onRewardClaimed }) 
       const msg =
         resp?.message ||
         `+${resp?.reward?.points ?? 0} points${
-          resp?.reward?.prestigeTickets ? ` • +${resp.reward.prestigeTickets} ticket` : ""
+          resp?.reward?.prestigeTickets
+            ? ` • +${resp.reward.prestigeTickets} ticket`
+            : ""
         }`;
       showBanner(msg, "success");
     } catch (err: any) {
@@ -129,7 +138,10 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({ onRewardClaimed }) 
         "Error claiming reward";
 
       const already = /already\s*claimed/i.test(raw);
-      showBanner(already ? "Already claimed today" : raw, already ? "info" : "error");
+      showBanner(
+        already ? "Already claimed today" : raw,
+        already ? "info" : "error"
+      );
 
       if (!already) setCanClaim(true);
       await fetchDailyStatus();
@@ -162,14 +174,17 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({ onRewardClaimed }) 
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-indigo-100 overflow-hidden">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 flex items-center justify-between">
+    <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 overflow-hidden">
+      {/* Header — make height/padding identical */}
+      <div
+        className="h-14 px-5 py-3 bg-gradient-to-r from-indigo-500 to-purple-600
+                    flex items-center justify-between"
+      >
         <div className="flex items-center space-x-2">
           <Calendar className="h-6 w-6 text-white" />
-          <h3 className="text-lg font-bold text-white">Daily Login</h3>
+          <h3 className="text-lg font-semibold text-white">Daily Login</h3>
         </div>
-        <div className="flex items-center space-x-1 bg-white/20 rounded-full px-3 py-1">
+        <div className="flex items-center space-x-1 bg-white/20 rounded-full px-3">
           <Star className="h-4 w-4 text-yellow-300" />
           <span className="text-white font-medium">Day {currentStreak}</span>
         </div>
@@ -184,8 +199,8 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({ onRewardClaimed }) 
                 banner.kind === "success"
                   ? "bg-green-50 text-green-800 border-green-200"
                   : banner.kind === "info"
-                  ? "bg-blue-50 text-blue-800 border-blue-200"
-                  : "bg-red-50 text-red-800 border-red-200"
+                    ? "bg-blue-50 text-blue-800 border-blue-200"
+                    : "bg-red-50 text-red-800 border-red-200"
               }`}
           >
             {banner.text}
@@ -205,8 +220,8 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({ onRewardClaimed }) 
                   claimed
                     ? "bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-300 text-green-700"
                     : nextUp
-                    ? "bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-blue-300 text-blue-700 animate-pulse"
-                    : "bg-gray-100 border-2 border-gray-200 text-gray-400"
+                      ? "bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-blue-300 text-blue-700 animate-pulse"
+                      : "bg-gray-100 border-2 border-gray-200 text-gray-400"
                 }`}
               >
                 <span className="font-bold">{day}</span>
@@ -229,7 +244,9 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({ onRewardClaimed }) 
             </span>
             <div className="flex items-center space-x-1">
               <Gift className="h-4 w-4 text-indigo-600" />
-              <span className="font-bold text-indigo-900">{getNextReward()} points</span>
+              <span className="font-bold text-indigo-900">
+                {getNextReward()} points
+              </span>
             </div>
           </div>
           {(canClaim ? currentStreak + 1 : currentStreak + 2) === 7 && (
@@ -278,7 +295,8 @@ const DailyLoginWidget: React.FC<DailyLoginWidgetProps> = ({ onRewardClaimed }) 
             </span>
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            Rewards reset daily at 12:00 AM. Login daily to maintain your streak!
+            Rewards reset daily at 12:00 AM. Login daily to maintain your
+            streak!
           </p>
         </div>
       </div>
