@@ -1,3 +1,4 @@
+// src/components/dashboard/MainContent.tsx
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { DailyLoginStatus } from "../../types/user";
@@ -5,16 +6,28 @@ import MyCompetitions from "./MycompetitionItems";
 import type { MyCompetitionItem } from "./MycompetitionItems";
 import { getCompetitionPhase } from "../../utils/competition";
 import { useUser } from "../../context/userContext";
+
 import comp1 from "../../images/competition1.jpg";
 import comp2 from "../../images/competition2.jpg";
 import comp3 from "../../images/competition3.jpg";
 import comp4 from "../../images/competition4.jpg";
 import comp5 from "../../images/competition5.jpg";
 import comp6 from "../../images/competition6.jpg";
+
 import ParticipationModal from "../participationModal";
 import DailyLoginWidget from "./DailyLoginWidget";
 import { LeaderboardMini } from "./leaderboardMini";
-import { Star, Ticket as TicketIcon, Users, KeyRound, ChevronLeft, ChevronRight } from "lucide-react";
+
+import {
+  Star,
+  Ticket as TicketIcon,
+  Users,
+  KeyRound,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+
+import Card from "./card";
 
 /* ============================ API base ============================ */
 export const API_BASE =
@@ -131,14 +144,19 @@ const OverviewCompactCard: React.FC<{
   );
 
   return (
-    <div className="rounded-2xl border border-indigo-100 bg-white/70 p-5 shadow-sm">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-indigo-900">Overview</h3>
-        <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">
+    <Card
+      title="Overview"
+      icon={
+        <span className="inline-flex h-7 w-7 items-center justify-center rounded bg-white/20 text-white text-[10px] font-bold">
+          OV
+        </span>
+      }
+      right={
+        <span className="rounded-full bg-white/20 px-2.5 py-1 text-xs font-medium text-white">
           Live
         </span>
-      </div>
-
+      }
+    >
       <div className="grid grid-cols-2 gap-3 mb-3">
         <Tile icon={<Star className="h-5 w-5 text-indigo-600" />} label="Points" value={totalPoints} />
         <Tile icon={<TicketIcon className="h-5 w-5 text-indigo-600" />} label="Tickets" value={prestigeTickets} />
@@ -177,7 +195,7 @@ const OverviewCompactCard: React.FC<{
           to earn points.
         </div>
       </div>
-    </div>
+    </Card>
   );
 };
 
@@ -214,39 +232,37 @@ const MainContent: React.FC<MainContentProps> = ({
   const [submitting, setSubmitting] = useState(false);
 
   /* ---------------------- Fetch competitions ---------------------- */
-// Make fetchAll NOT create/return a controller; just accept a signal.
-const fetchAll = useCallback(async (signal?: AbortSignal) => {
-  try {
-    setLoadingComps(true);
-    setError(null);
-    const token = localStorage.getItem("token");
-    const res = await fetch(`${API_BASE}/competitions`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      signal,
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const list: Competition[] = await res.json();
-    setComps(list);
-  } catch (e: any) {
-    if (e.name !== "AbortError") {
-      console.error("Failed to load competitions:", e);
-      setComps([]);
-      setError("Could not load competitions. Please try again.");
+  const fetchAll = useCallback(async (signal?: AbortSignal) => {
+    try {
+      setLoadingComps(true);
+      setError(null);
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/competitions`, {
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        signal,
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const list: Competition[] = await res.json();
+      setComps(list);
+    } catch (e: any) {
+      if (e.name !== "AbortError") {
+        console.error("Failed to load competitions:", e);
+        setComps([]);
+        setError("Could not load competitions. Please try again.");
+      }
+    } finally {
+      setLoadingComps(false);
     }
-  } finally {
-    setLoadingComps(false);
-  }
-}, []);
-
+  }, []);
 
   useEffect(() => {
-  const ctrl = new AbortController();
-  fetchAll(ctrl.signal);
-  return () => ctrl.abort();
-}, [fetchAll]);
+    const ctrl = new AbortController();
+    fetchAll(ctrl.signal);
+    return () => ctrl.abort();
+  }, [fetchAll]);
 
   // If default 'open' shows nothing, fall back to 'all'
   useEffect(() => {
@@ -331,45 +347,38 @@ const fetchAll = useCallback(async (signal?: AbortSignal) => {
     setParticipate({ open: true, comp: c });
   };
 
-const onConfirmParticipate = async (c: { _id: string }) => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      // keep using alert for auth issues if you want
-      alert("Please log in first.");
-      return;
+  const onConfirmParticipate = async (c: { _id: string }) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Please log in first.");
+        return;
+      }
+
+      setSubmitting(true);
+      setJoiningId(c._id);
+
+      const res = await fetch(`${API_BASE}/competitions/${c._id}/participate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ ticketCount: 1 }),
+      });
+
+      const data: ParticipateResponse = await res.json();
+      if (!res.ok) throw new Error(data?.message || data?.error || "Failed to participate");
+
+      await fetchAll(); // refresh list while success screen shows
+    } catch (e: any) {
+      alert(e?.message || "Could not participate");
+      throw e;
+    } finally {
+      setSubmitting(false);
+      setJoiningId(null);
     }
-
-    setSubmitting(true);
-    setJoiningId(c._id);
-
-    const res = await fetch(`${API_BASE}/competitions/${c._id}/participate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ ticketCount: 1 }),
-    });
-
-    const data: ParticipateResponse = await res.json();
-    if (!res.ok) throw new Error(data?.message || data?.error || "Failed to participate");
-
-    // ✅ Do NOT close the modal and do NOT alert here.
-    // ParticipationModal will flip to its success screen when onConfirm resolves.
-    await fetchAll(); // refresh the list while the success screen shows
-  } catch (e: any) {
-    // You can still surface errors
-    alert(e?.message || "Could not participate");
-    throw e; // let the modal keep the form phase
-  } finally {
-    setSubmitting(false);
-    setJoiningId(null);
-  }
-};
-
-
+  };
 
   /* ------------------ Daily login: optimistic UI ------------------ */
   const handleClaimDaily = async (pointsAwarded: number, ticketsAwarded: number) => {
-    // optimistic UI
     updatePoints(userPoints + pointsAwarded);
     if (ticketsAwarded) updatePrestigeTickets(userPrestigeTickets + ticketsAwarded);
     updateLoginStatus({
@@ -433,7 +442,7 @@ const onConfirmParticipate = async (c: { _id: string }) => {
             onRewardClaimed={handleClaimDaily}
           />
 
-          <LeaderboardMini perView={5} viewAllHref="/leaderboard" />
+          <LeaderboardMini perView={4} viewAllHref="/leaderboard" />
         </div>
 
         {/* Competitions */}
@@ -531,7 +540,7 @@ const onConfirmParticipate = async (c: { _id: string }) => {
                         >
                           <div className="relative h-48 overflow-hidden">
                             <img src={imageFor(c)} alt={c.title} className="h-full w-full object-cover" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 
                             <div className="absolute bottom-3 left-3 text-white">
                               <h4 className="font-bold text-lg mb-1">{c.title}</h4>
@@ -600,15 +609,13 @@ const onConfirmParticipate = async (c: { _id: string }) => {
       </main>
 
       {/* Participation modal */}
-     <ParticipationModal
-  open={participate.open}
-  competition={participate.comp}
-  onClose={() => setParticipate({ open: false, comp: null })}
-  onConfirm={(c) => onConfirmParticipate(c)}   // should resolve or throw
-  isSubmitting={submitting}
-/>
-
-
+      <ParticipationModal
+        open={participate.open}
+        competition={participate.comp}
+        onClose={() => setParticipate({ open: false, comp: null })}
+        onConfirm={(c) => onConfirmParticipate(c)}
+        isSubmitting={submitting}
+      />
     </div>
   );
 };
