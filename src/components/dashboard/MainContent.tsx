@@ -111,6 +111,7 @@ const OverviewCompactCard: React.FC<{
   codesSubmitted: number;
   pointsPerTicket?: number;
   onOpenSubmitCode?: () => void;
+  showProgress?: boolean;
 }> = ({
   totalPoints,
   prestigeTickets,
@@ -118,6 +119,7 @@ const OverviewCompactCard: React.FC<{
   codesSubmitted,
   pointsPerTicket = 10,
   onOpenSubmitCode,
+  showProgress = false,
 }) => {
   const progress = Math.max(
     0,
@@ -188,38 +190,38 @@ const OverviewCompactCard: React.FC<{
           value={codesSubmitted}
         />
       </div>
-
-      <div className="rounded-xl border border-slate-100 bg-white p-4">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="text-sm font-semibold text-slate-800">
-            Next prestige ticket
+      {showProgress && (
+        <div className="rounded-xl border border-slate-100 bg-white p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <div className="text-sm font-semibold text-slate-800">
+              Next prestige ticket
+            </div>
+            <div className="text-xs text-slate-500">
+              {Math.floor(progress * 100)}%
+            </div>
           </div>
-          <div className="text-xs text-slate-500">
-            {Math.floor(progress * 100)}%
+          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 transition-all"
+              style={{ width: `${progress * 100}%` }}
+            />
+          </div>
+          <div className="mt-2 text-xs text-slate-600">
+            {progress === 0
+              ? `Earn ${pointsPerTicket} pts to get a ticket`
+              : `${ptsToNext} pts to your next ticket`}
           </div>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 transition-all"
-            style={{ width: `${progress * 100}%` }}
-          />
-        </div>
-        <div className="mt-2 text-xs text-slate-600">
-          {progress === 0
-            ? `Earn ${pointsPerTicket} pts to get a ticket`
-            : `${ptsToNext} pts to your next ticket`}
-        </div>
-
-        <div className="mt-3 text-sm">
-          <button
-            type="button"
-            onClick={onOpenSubmitCode}
-            className="font-medium text-indigo-700 hover:text-indigo-800 hover:underline"
-          >
-            Submit code
-          </button>{" "}
-          to earn points.
-        </div>
+      )}
+      <div className="mt-3 text-sm flex items-center justify-center gap-1">
+        <button
+          type="button"
+          onClick={onOpenSubmitCode}
+          className="font-medium text-indigo-700 hover:text-indigo-800 hover:underline"
+        >
+          Submit code
+        </button>
+        <span>to earn points.</span>
       </div>
     </Card>
   );
