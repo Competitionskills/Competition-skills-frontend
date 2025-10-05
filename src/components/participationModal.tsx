@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  X, Clock, ShieldCheck, Info, Ticket, CheckCircle, Trophy, AlertTriangle
+  X,
+  Clock,
+  ShieldCheck,
+  Info,
+  Ticket,
+  CheckCircle,
+  Trophy,
+  AlertTriangle,
 } from "lucide-react";
 
 type Competition = {
@@ -8,6 +15,7 @@ type Competition = {
   title: string;
   description?: string;
   bannerUrl?: string;
+  images?: string[];
   startsAt?: string;
   endsAt: string;
   entryCost: number;
@@ -65,8 +73,8 @@ const ParticipationModal: React.FC<Props> = ({
     setErrorMsg(null);
     setSubmitting(true);
     try {
-      await onConfirm(c);     // if this throws, we stay on the form and show error
-      setPhase("success");    // success -> switch to success screen, keep modal open
+      await onConfirm(c); // if this throws, we stay on the form and show error
+      setPhase("success"); // success -> switch to success screen, keep modal open
     } catch (e: any) {
       const msg =
         e?.message ||
@@ -83,8 +91,11 @@ const ParticipationModal: React.FC<Props> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div role="dialog" aria-modal="true"
-           className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <div className="flex items-center gap-2">
@@ -93,28 +104,42 @@ const ParticipationModal: React.FC<Props> = ({
               {phase === "form" ? "Enter Competition" : "Entry Confirmed"}
             </h3>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-gray-100"
+            aria-label="Close"
+          >
             <X className="h-5 w-5 text-gray-600" />
           </button>
         </div>
 
         {phase === "form" ? (
           <div className="grid md:grid-cols-2 gap-0">
-            {/* Left: image/summary */}
             <div className="p-6 md:border-r">
-              {c.bannerUrl ? (
-                <img src={c.bannerUrl} alt={c.title}
-                     className="h-40 w-full object-cover rounded-xl mb-4" />
-              ) : (
-                <div className="h-40 w-full rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 mb-4" />
-              )}
+              {(() => {
+                const cover = c.bannerUrl || c.images?.[0]; // <-- use uploaded cover
+                return cover ? (
+                  <img
+                    src={cover}
+                    alt={c.title}
+                    className="h-40 w-full object-cover rounded-xl mb-4"
+                  />
+                ) : (
+                  <div className="h-40 w-full rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 mb-4" />
+                );
+              })()}
 
-              <h4 className="text-xl font-bold text-indigo-900 mb-1">{c.title}</h4>
+              <h4 className="text-xl font-bold text-indigo-900 mb-1">
+                {c.title}
+              </h4>
 
               <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
                 <Ticket className="h-4 w-4" />
                 <span>
-                  Entry: <span className="font-semibold text-indigo-700">{c.entryCost}</span>{" "}
+                  Entry:{" "}
+                  <span className="font-semibold text-indigo-700">
+                    {c.entryCost}
+                  </span>{" "}
                   prestige ticket{c.entryCost > 1 ? "s" : ""}
                 </span>
               </div>
@@ -133,14 +158,28 @@ const ParticipationModal: React.FC<Props> = ({
             <div className="p-6">
               <div className="flex items-center gap-2 mb-2">
                 <Info className="h-4 w-4 text-indigo-600" />
-                <p className="text-sm font-medium text-indigo-800">Competition Terms</p>
+                <p className="text-sm font-medium text-indigo-800">
+                  Competition Terms
+                </p>
               </div>
 
               <div className="h-32 overflow-y-auto border rounded-lg p-3 text-xs leading-5 bg-gray-50 text-gray-700 mb-4">
-                <p>• This is a <strong>skill-based entry</strong>. No wagering or gambling.</p>
-                <p>• One prestige ticket equals one entry. Entry is non-refundable after submission.</p>
-                <p>• You must answer the skill question correctly for your entry to be counted.</p>
-                <p>• Winners are selected fairly from eligible entries after the competition ends.</p>
+                <p>
+                  • This is a <strong>skill-based entry</strong>. No wagering or
+                  gambling.
+                </p>
+                <p>
+                  • One prestige ticket equals one entry. Entry is
+                  non-refundable after submission.
+                </p>
+                <p>
+                  • You must answer the skill question correctly for your entry
+                  to be counted.
+                </p>
+                <p>
+                  • Winners are selected fairly from eligible entries after the
+                  competition ends.
+                </p>
                 <p>• Misuse or abuse may result in disqualification.</p>
               </div>
 
@@ -175,7 +214,9 @@ const ParticipationModal: React.FC<Props> = ({
                         <span className="text-green-700">Looks good.</span>
                       </>
                     ) : (
-                      <span className="text-gray-500">Double-check your answer.</span>
+                      <span className="text-gray-500">
+                        Double-check your answer.
+                      </span>
                     )}
                   </div>
                 )}
@@ -192,12 +233,15 @@ const ParticipationModal: React.FC<Props> = ({
                 onClick={handleConfirm}
                 disabled={disabled}
                 className={`w-full mt-3 rounded-lg px-4 py-3 font-semibold text-white transition
-                  ${disabled
-                    ? "bg-gray-300 cursor-not-allowed"
-                    : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500"
+                  ${
+                    disabled
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500"
                   }`}
               >
-                {submitting || isSubmitting ? "Submitting…" : "Enter Competition"}
+                {submitting || isSubmitting
+                  ? "Submitting…"
+                  : "Enter Competition"}
               </button>
 
               <button
@@ -215,9 +259,13 @@ const ParticipationModal: React.FC<Props> = ({
               <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
                 <Trophy className="h-7 w-7 text-green-600" />
               </div>
-              <h4 className="text-2xl font-extrabold text-slate-900">You're in! 🎉</h4>
+              <h4 className="text-2xl font-extrabold text-slate-900">
+                You're in! 🎉
+              </h4>
               <p className="mt-2 text-slate-600">
-                Your entry to <span className="font-semibold text-indigo-700">{c.title}</span> was successful.
+                Your entry to{" "}
+                <span className="font-semibold text-indigo-700">{c.title}</span>{" "}
+                was successful.
               </p>
 
               <div className="mt-6 w-full rounded-xl border bg-indigo-50 p-4 text-left">
@@ -228,7 +276,9 @@ const ParticipationModal: React.FC<Props> = ({
                   </div>
                   <div className="text-sm text-indigo-900">
                     <div className="font-semibold">Entry Cost</div>
-                    <div>{c.entryCost} prestige ticket{c.entryCost > 1 ? "s" : ""}</div>
+                    <div>
+                      {c.entryCost} prestige ticket{c.entryCost > 1 ? "s" : ""}
+                    </div>
                   </div>
                 </div>
               </div>

@@ -1,47 +1,46 @@
 import axios from "axios";
 
-// ✅ Base API URL from .env file
+const API_BASE_URL = "https://api.scoreperks.co.uk/api";
 
-const API_BASE_URL = "https://api.scoreperks.co.uk/api" ;
-
-
-console.log("✅ Axios Base URL:", API_BASE_URL);
-
-// ✅ Create an Axios instance
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: false,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
 });
 
-// ✅ Immediately attach token if exists in localStorage
-const token = localStorage.getItem("authToken");
-if (token) {
-  api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-}
+// ✅ Always attach the latest token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("authToken"); // <-- make sure your login saves with this key
+  if (token) {
+    config.headers = config.headers ?? {};
+    config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    // ensure header is removed if no token
+    if (config.headers && "Authorization" in config.headers) {
+      delete (config.headers as any).Authorization;
+    }
+  }
+  return config;
+});
 
-// ✅ Function to set Authorization token dynamically
+// Optional helper if you set token on login
 export const setAuthToken = (token: string | null) => {
   if (token) {
-    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    localStorage.setItem("authToken", token);
   } else {
-    delete api.defaults.headers.common["Authorization"];
+    localStorage.removeItem("authToken");
   }
 };
 
-
-// ✅ Axios Response Interceptor (Handles 401 Unauthorized Globally)
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      console.warn("Unauthorized! Redirecting to login...");
-      // Optional: Redirect to login
-    }
-    return Promise.reject(error);
+api.interceptors.request.use((config) => {
+  const token =
+    localStorage.getItem("authToken") ||
+    localStorage.getItem("token") ||
+    localStorage.getItem("accessToken");
+  if (token) {
+    config.headers = config.headers ?? {};
+    (config.headers as any).Authorization = `Bearer ${token}`;
   }
-);
+  return config;
+});
 
 export default api;
