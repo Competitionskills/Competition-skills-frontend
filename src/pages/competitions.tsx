@@ -3,9 +3,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import Header from "../components/Header";
 import { Footer } from "../components/footer";
 import BackgroundImage from "../images/background-img.jpg";
+import ParticipationModal from "../components/participationModal";
 
 // CRA env (no import.meta)
-const API_BASE = process.env.REACT_APP_API_URL || "https://api.scoreperks.co.uk";
+const API_BASE =
+  process.env.REACT_APP_API_URL || "https://api.scoreperks.co.uk";
 
 type CompetitionStatus = "open" | "closed";
 
@@ -15,9 +17,14 @@ interface Competition {
   description?: string;
   endsAt: string;
   entryCost: number;
-  maxTicketsPerUser: number;   // 0 = unlimited
+  maxTicketsPerUser: number; // 0 = unlimited
   status: CompetitionStatus;
   participants?: Array<{ ticketId: string; userId: string }>;
+
+  // images (any one or more may be present)
+  bannerUrl?: string;
+  images?: string[];
+  coverUrl?: string; // virtual from backend (optional)
 }
 
 async function http<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -30,6 +37,7 @@ async function http<T>(path: string, init: RequestInit = {}): Promise<T> {
   return data as T;
 }
 
+/* ---------- helpers ---------- */
 function timeLeft(iso?: string) {
   if (!iso) return "—";
   const ms = new Date(iso).getTime() - Date.now();
@@ -41,84 +49,37 @@ function timeLeft(iso?: string) {
   if (h > 0) return `${h}h ${m}m`;
   return `${m}m`;
 }
+const isEnded = (c: Competition) =>
+  new Date(c.endsAt).getTime() <= Date.now() || c.status !== "open";
 
-const ParticipateModal: React.FC<{
-  open: boolean;
-  onClose: () => void;
-  competition: Competition | null;
-  onSuccess: () => void;
-}> = ({ open, onClose, competition, onSuccess }) => {
-  const [qty, setQty] = useState(1);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const [ok, setOk] = useState<string | null>(null);
+const coverFor = (c: Competition) =>
+  (c.coverUrl || c.bannerUrl || c.images?.[0] || "").trim();
 
-  useEffect(() => {
-    if (open) { setQty(1); setErr(null); setOk(null); }
-  }, [open]);
+const timeLabel = (c: Competition) =>
+  isEnded(c) ? "Ended" : `Ends in ${timeLeft(c.endsAt)}`;
 
-  if (!open || !competition) return null;
-
-  const submit = async () => {
-    setBusy(true); setErr(null); setOk(null);
-    try {
-      await http(`/api/competitions/${competition._id}/participate`, {
-        method: "POST",
-        body: JSON.stringify({ ticketCount: qty }),
-      });
-      setOk(`Entered with ${qty} ticket${qty > 1 ? "s" : ""}. Good luck!`);
-      onSuccess();
-    } catch (e: any) {
-      setErr(e.message || "Failed to participate");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Participate in {competition.title}</h2>
-          <button onClick={onClose} className="rounded px-2 py-1 text-sm hover:bg-gray-100">✕</button>
-        </div>
-
-        {err && <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">{err}</div>}
-        {ok &&  <div className="mb-3 rounded-lg bg-green-50 p-3 text-sm text-green-700">{ok}</div>}
-
-        <label className="block text-sm font-medium">Entries</label>
-        <input
-          type="number"
-          min={1}
-          value={qty}
-          onChange={(e) => setQty(Math.max(1, parseInt(e.target.value || "1", 10)))}
-          className="mb-3 w-full rounded-lg border p-2"
-        />
-        <p className="mb-4 text-sm text-gray-600">
-          Cost per entry: <b>{competition.entryCost}</b> prestige ticket(s)
-        </p>
-
-        <button
-          disabled={busy}
-          onClick={submit}
-          className="w-full rounded-xl bg-indigo-600 px-4 py-2 font-semibold text-white disabled:opacity-60"
-        >
-          {busy ? "Submitting…" : "Confirm Entry"}
-        </button>
-      </div>
-    </div>
-  );
-};
-
+/* ---------- page ---------- */
 const CompetitionsPage: React.FC = () => {
   const [filter, setFilter] = useState<"open" | "closed" | "all">("all");
   const [list, setList] = useState<Competition[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<Competition | null>(null);
+
+  // description expand/collapse per card
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const toggleDesc = (id: string) =>
+    setExpanded((s) => ({ ...s, [id]: !s[id] }));
+
+  // shared participation modal
+  const [modal, setModal] = useState<{ open: boolean; comp: Competition | null }>({
+    open: false,
+    comp: null,
+  });
+  const [submitting, setSubmitting] = useState(false);
 
   const fetchAll = async (f = filter) => {
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
     try {
       const q = f === "all" ? "" : `?status=${f}`;
       const data = await http<Competition[]>(`/api/competitions${q}`);
@@ -130,75 +91,129 @@ const CompetitionsPage: React.FC = () => {
     }
   };
 
-  useEffect(() => { fetchAll(filter); }, [filter]); // eslint-disable-line
+  useEffect(() => {
+    fetchAll(filter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter]);
+
+  const askParticipate = (c: Competition) => {
+    if (isEnded(c)) return;
+    setModal({ open: true, comp: c });
+  };
+
+  const confirmParticipate = async (c: Competition) => {
+    try {
+      setSubmitting(true);
+      await http(`/api/competitions/${c._id}/participate`, {
+        method: "POST",
+        body: JSON.stringify({ ticketCount: 1 }),
+      });
+      setModal({ open: false, comp: null });
+      await fetchAll(filter);
+    } catch (e) {
+      // rethrow so modal shows the error
+      throw e;
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const cards = useMemo(
     () =>
-      list.map((c) => (
-        <div key={c._id} className="rounded-2xl border bg-white p-4 shadow-sm">
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-lg font-semibold">{c.title}</h3>
-            <span
-              className={
-                c.status === "open"
-                  ? "rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700"
-                  : "rounded-full bg-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-700"
-              }
-            >
-              {c.status}
-            </span>
-          </div>
+      list.map((c) => {
+        const ended = isEnded(c);
+        const badgeClass = ended
+          ? "rounded-full bg-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-700"
+          : "rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700";
 
-          <p className="mb-3 line-clamp-2 text-sm text-gray-600">
-            {c.description || "No description."}
-          </p>
-
-          <div className="mb-3 grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-lg bg-indigo-50 p-3">
-              <div className="text-indigo-900">Ends</div>
-              <div className="font-semibold text-indigo-700">
-                {new Date(c.endsAt).toLocaleString()}
+        return (
+          <div key={c._id} className="rounded-2xl border bg-white p-4 shadow-sm">
+            {/* cover image */}
+            <div className="relative mb-3 h-40 w-full overflow-hidden rounded-xl">
+              {coverFor(c) ? (
+                <img
+                  src={coverFor(c)}
+                  alt={c.title}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="h-full w-full bg-gradient-to-br from-indigo-50 to-purple-50" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
+              <div className="absolute top-2 right-2">
+                <span className={badgeClass}>{ended ? "ended" : "open"}</span>
+              </div>
+              <div className="absolute bottom-2 left-3 text-white">
+                <h3 className="text-lg font-semibold">{c.title}</h3>
+                <p className="text-xs opacity-90">{timeLabel(c)}</p>
               </div>
             </div>
-            <div className="rounded-lg bg-indigo-50 p-3">
-              <div className="text-indigo-900">Time left</div>
-              <div className="font-semibold text-indigo-700">{timeLeft(c.endsAt)}</div>
+
+            {/* description with Read more / Show less */}
+            <div className="mb-3">
+              <p
+                className={`text-sm text-gray-600 ${
+                  expanded[c._id] ? "" : "line-clamp-2"
+                }`}
+              >
+                {c.description || "No description."}
+              </p>
+              {c.description && c.description.length > 120 && (
+                <button
+                  type="button"
+                  onClick={() => toggleDesc(c._id)}
+                  className="mt-1 text-xs font-semibold text-indigo-700 hover:underline"
+                >
+                  {expanded[c._id] ? "Show less" : "Read more"}
+                </button>
+              )}
             </div>
-            <div className="rounded-lg bg-gray-50 p-3">
-              <div className="text-gray-900">Entry cost</div>
-              <div className="font-semibold text-gray-700">{c.entryCost} prestige ticket(s)</div>
-            </div>
-            <div className="rounded-lg bg-gray-50 p-3">
-              <div className="text-gray-900">Max per user</div>
-              <div className="font-semibold text-gray-700">
-                {c.maxTicketsPerUser || "Unlimited"}
+
+            <div className="mb-3 grid grid-cols-2 gap-3 text-sm">
+              <div className="rounded-lg bg-gray-50 p-3">
+                <div className="text-gray-900">Entry cost</div>
+                <div className="font-semibold text-gray-700">
+                  {c.entryCost} prestige ticket(s)
+                </div>
+              </div>
+              <div className="rounded-lg bg-gray-50 p-3">
+                <div className="text-gray-900">Max per user</div>
+                <div className="font-semibold text-gray-700">
+                  {c.maxTicketsPerUser || "Unlimited"}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between">
-            <div className="text-xs text-gray-500">
-              Entries: {c.participants?.length ?? 0}
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => askParticipate(c)}
+                disabled={ended}
+                className="text-xs font-medium disabled:text-gray-400 text-indigo-700 hover:underline"
+                title={ended ? "Competition ended" : "Join this competition"}
+              >
+                Participants: {c.participants?.length ?? 0}
+              </button>
+
+              <button
+                disabled={ended}
+                onClick={() => askParticipate(c)}
+                className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {ended ? "Ended" : "Participate"}
+              </button>
             </div>
-            <button
-              disabled={c.status !== "open"}
-              onClick={() => setSelected(c)}
-              className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {c.status === "open" ? "Participate" : "Closed"}
-            </button>
           </div>
-        </div>
-      )),
-    [list]
+        );
+      }),
+    [list, expanded]
   );
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Same header as Settings */}
       <Header />
 
-      {/* Same background treatment as Settings/Leaderboard */}
       <div
         className="relative flex-grow bg-cover bg-center"
         style={{ backgroundImage: `url(${BackgroundImage})` }}
@@ -231,7 +246,9 @@ const CompetitionsPage: React.FC = () => {
           </div>
 
           {/* Content */}
-          {loading && <div className="rounded-xl border bg-white/70 p-6">Loading…</div>}
+          {loading && (
+            <div className="rounded-xl border bg-white/70 p-6">Loading…</div>
+          )}
           {error && (
             <div className="rounded-xl border border-red-300 bg-red-50 p-6 text-red-700">
               {error}
@@ -253,11 +270,13 @@ const CompetitionsPage: React.FC = () => {
 
       <Footer />
 
-      <ParticipateModal
-        open={!!selected}
-        onClose={() => setSelected(null)}
-        competition={selected}
-        onSuccess={() => fetchAll(filter)}
+      {/* Shared participation modal */}
+      <ParticipationModal
+        open={modal.open}
+        competition={modal.comp as any}
+        onClose={() => setModal({ open: false, comp: null })}
+        onConfirm={(c) => confirmParticipate(c as any)}
+        isSubmitting={submitting}
       />
     </div>
   );
