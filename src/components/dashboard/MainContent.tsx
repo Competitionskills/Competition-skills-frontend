@@ -41,10 +41,11 @@ type Competition = {
   title: string;
   description?: string;
   bannerUrl?: string;
+  images?: string[]; // <— Cloudinary covers
   startsAt?: string;
   endsAt: string;
   entryCost: number;
-  status?: CompetitionStatus;
+  status?: CompetitionStatus; // <— trust backend when present
   participants?: Participant[];
 };
 
@@ -70,9 +71,10 @@ function hashStr(s: string): number {
   return h | 0;
 }
 function imageFor(c: Competition) {
-  if (c.bannerUrl) return c.bannerUrl;
+  const cover = c.bannerUrl || c.images?.[0]; // prefer uploaded URL
+  if (cover) return cover;
   const idx = Math.abs(hashStr(c._id || c.title || "")) % CASH_IMAGES.length;
-  return CASH_IMAGES[idx];
+  return CASH_IMAGES[idx]; // fallback to local stock image
 }
 
 /* ============================ Props =============================== */
@@ -102,6 +104,82 @@ const displayNameFromUser = (u: any, fallback?: string | null) => {
     null
   );
 };
+
+/** Prefer backend status, fall back to date logic */
+function toDate(v: any): Date | null {
+  if (!v) return null;
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? null : d;
+}
+function distance(from: Date, to: Date) {
+  let ms = to.getTime() - from.getTime();
+  const past = ms < 0;
+  ms = Math.abs(ms);
+  const m = Math.floor(ms / 60000);
+  const d = Math.floor(m / (60 * 24));
+  const h = Math.floor((m % (60 * 24)) / 60);
+  const mm = m % 60;
+  const parts: string[] = [];
+  if (d) parts.push(`${d}d`);
+  if (h) parts.push(`${h}h`);
+  if (!d && mm) parts.push(`${mm}m`);
+  if (!parts.length) parts.push("now");
+  return past ? `${parts.join(" ")} ago` : `in ${parts.join(" ")}`;
+}
+
+function computePhase(c: Competition) {
+  const now = new Date();
+  const start = toDate(c.startsAt);
+  const end = toDate(c.endsAt);
+
+  // ⛔ Time-based end always wins
+  if (end && now >= end) {
+    return {
+      phase: "ended" as const,
+      isOpen: false,
+      timeLabel: `Ended ${distance(end, now)}`,
+    };
+  }
+
+  // Prefer backend status when not past end time
+  if (typeof c.status === "string") {
+    const statusOpen = c.status === "open";
+    const phase = statusOpen
+      ? start && now < start
+        ? "upcoming"
+        : "open"
+      : "ended";
+    return {
+      phase: phase as "upcoming" | "open" | "ended",
+      isOpen: statusOpen, // safe because we already handled end<=now
+      timeLabel:
+        phase === "upcoming" && start
+          ? `Starts ${distance(now, start)}`
+          : phase === "open" && end
+            ? `Ends ${distance(now, end)}`
+            : "",
+    };
+  }
+
+  // Fallback purely on dates
+  if (start && now < start)
+    return {
+      phase: "upcoming" as const,
+      isOpen: false,
+      timeLabel: `Starts ${distance(now, start)}`,
+    };
+  if (end && now < end)
+    return {
+      phase: "open" as const,
+      isOpen: true,
+      timeLabel: `Ends ${distance(now, end)}`,
+    };
+  return {
+    phase: "ended" as const,
+    isOpen: false,
+    timeLabel: end ? `Ended ${distance(end, now)}` : "",
+  };
+}
 
 /* ====================== Overview (compact card) =================== */
 const OverviewCompactCard: React.FC<{
@@ -190,6 +268,7 @@ const OverviewCompactCard: React.FC<{
           value={codesSubmitted}
         />
       </div>
+
       {showProgress && (
         <div className="rounded-xl border border-slate-100 bg-white p-4">
           <div className="mb-2 flex items-center justify-between">
@@ -213,6 +292,7 @@ const OverviewCompactCard: React.FC<{
           </div>
         </div>
       )}
+
       <div className="mt-3 text-sm flex items-center justify-center gap-1">
         <button
           type="button"
@@ -255,14 +335,10 @@ const MainContent: React.FC<MainContentProps> = ({
   const perPage = 3;
 
   const [myCompItems, setMyCompItems] = useState<MyCompetitionItem[]>([]);
-
   const [participate, setParticipate] = useState<{
     open: boolean;
     comp: Competition | null;
-  }>({
-    open: false,
-    comp: null,
-  });
+  }>({ open: false, comp: null });
   const [submitting, setSubmitting] = useState(false);
 
   /* ---------------------- Fetch competitions ---------------------- */
@@ -301,15 +377,7 @@ const MainContent: React.FC<MainContentProps> = ({
   // If default 'open' shows nothing, fall back to 'all'
   useEffect(() => {
     if (filter !== "open" || comps.length === 0) return;
-    const anyOpen = comps.some((c) => {
-      const { phase } = getCompetitionPhase({
-        _id: c._id,
-        title: c.title,
-        startsAt: c.startsAt,
-        endsAt: c.endsAt,
-      });
-      return phase === "open";
-    });
+    const anyOpen = comps.some((c) => computePhase(c).isOpen);
     if (!anyOpen) setFilter("all");
   }, [comps, filter]);
 
@@ -348,13 +416,8 @@ const MainContent: React.FC<MainContentProps> = ({
   const filteredComps = useMemo(() => {
     return comps.filter((c) => {
       if (filter === "all") return true;
-      const { phase } = getCompetitionPhase({
-        _id: c._id,
-        title: c.title,
-        startsAt: c.startsAt,
-        endsAt: c.endsAt,
-      });
-      return filter === "open" ? phase === "open" : phase === "ended";
+      const { phase, isOpen } = computePhase(c);
+      return filter === "open" ? isOpen : phase === "ended";
     });
   }, [comps, filter]);
 
@@ -371,12 +434,7 @@ const MainContent: React.FC<MainContentProps> = ({
 
   /* ----------------------- Participation flow --------------------- */
   const askParticipate = (c: Competition) => {
-    const { isOpen } = getCompetitionPhase({
-      _id: c._id,
-      title: c.title,
-      startsAt: c.startsAt,
-      endsAt: c.endsAt,
-    });
+    const { isOpen } = computePhase(c);
     if (!isOpen) return;
     setParticipate({ open: true, comp: c });
   };
@@ -523,7 +581,7 @@ const MainContent: React.FC<MainContentProps> = ({
                   ))}
 
                   {/* Pagination arrows */}
-                  {filteredComps.length > perPage && (
+                  {filteredComps.length > 3 && (
                     <div className="ml-2 inline-flex rounded-lg border border-indigo-200 overflow-hidden">
                       <button
                         onClick={() => setPage((p) => Math.max(0, p - 1))}
@@ -578,12 +636,7 @@ const MainContent: React.FC<MainContentProps> = ({
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                     {visibleComps.map((c) => {
-                      const { phase, isOpen, timeLabel } = getCompetitionPhase({
-                        _id: c._id,
-                        title: c.title,
-                        startsAt: c.startsAt,
-                        endsAt: c.endsAt,
-                      });
+                      const { phase, isOpen, timeLabel } = computePhase(c);
 
                       const badgeClass =
                         phase === "open"
@@ -651,14 +704,14 @@ const MainContent: React.FC<MainContentProps> = ({
                               aria-label={
                                 isOpen
                                   ? `Participate in ${c.title}`
-                                  : `${c.title} is closed`
+                                  : `${c.title} has ended`
                               }
                             >
                               {joiningId === c._id
                                 ? "Joining…"
                                 : isOpen
                                   ? "Participate Now"
-                                  : "Closed"}
+                                  : "Ended"}
                             </button>
                           </div>
                         </div>
