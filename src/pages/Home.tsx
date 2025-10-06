@@ -44,7 +44,7 @@ const Home: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useUser();
 
-  // --- state
+  // state
   const [featured, setFeatured] = useState<Competition | null>(null);
   const [loadingFeat, setLoadingFeat] = useState(true);
   const [winners, setWinners] = useState<Winner[]>([]);
@@ -55,22 +55,20 @@ const Home: React.FC = () => {
   const [participate, setParticipate] = useState<{
     open: boolean;
     comp: Competition | null;
-  }>({
-    open: false,
-    comp: null,
-  });
+  }>({ open: false, comp: null });
   const [submitting, setSubmitting] = useState(false);
 
-  /* ================= helpers (same philosophy as dashboard) ================= */
+  /* ============== helpers (mirror dashboard strategy) ============== */
   const toDate = (v: any) => {
     if (!v) return null;
     const d = new Date(v);
     return isNaN(d.getTime()) ? null : d;
   };
+
   const computePhase = (c: Competition) => {
     const now = new Date();
-    const start = toDate(c.startsAt);
-    const end = toDate(c.endsAt);
+    const start = toDate(c.startsAt as any);
+    const end = toDate(c.endsAt as any);
 
     if (end && now >= end) return { phase: "ended" as const, isOpen: false };
     if (c.status === "open") {
@@ -85,7 +83,7 @@ const Home: React.FC = () => {
     return { phase: "ended" as const, isOpen: false };
   };
 
-  /* ================= featured selection (deterministic) ================= */
+  /* ============== featured selection (deterministic) ============== */
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -108,11 +106,11 @@ const Home: React.FC = () => {
         );
 
         const byEnds = (a: Competition, b: Competition) =>
-          (toDate(a.endsAt)?.getTime() ?? Infinity) -
-          (toDate(b.endsAt)?.getTime() ?? Infinity);
+          (toDate(a.endsAt as any)?.getTime() ?? Infinity) -
+          (toDate(b.endsAt as any)?.getTime() ?? Infinity);
         const byStarts = (a: Competition, b: Competition) =>
-          (toDate(a.startsAt)?.getTime() ?? Infinity) -
-          (toDate(b.startsAt)?.getTime() ?? Infinity);
+          (toDate(a.startsAt as any)?.getTime() ?? Infinity) -
+          (toDate(b.startsAt as any)?.getTime() ?? Infinity);
 
         const pick = open.sort(byEnds)[0] ?? upcoming.sort(byStarts)[0] ?? null;
         setFeatured(pick || null);
@@ -128,7 +126,7 @@ const Home: React.FC = () => {
     };
   }, []);
 
-  // ensure participants count exists (if list response was slim)
+  // if featured came from a slim list (no participants), hydrate details
   useEffect(() => {
     if (!featured?._id || typeof featured.participants !== "undefined") return;
     let alive = true;
@@ -180,10 +178,10 @@ const Home: React.FC = () => {
     };
   }, []);
 
-  /* ================= countdown ================= */
+  /* ============== countdown for featured ============== */
   useEffect(() => {
     if (!featured?.endsAt) return;
-    const end = new Date(featured.endsAt).getTime();
+    const end = new Date(featured.endsAt as any).getTime();
     const tick = () => {
       const now = Date.now();
       const diff = Math.max(0, end - now);
@@ -197,16 +195,17 @@ const Home: React.FC = () => {
     return () => clearInterval(id);
   }, [featured?.endsAt]);
 
-  /* ================= modal confirm ================= */
+  /* ============== confirm participation ============== */
+  // inside Home.tsx
   const onConfirmParticipate = async (c: { _id: string }) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Please log in first.");
-        return;
-      }
-      setSubmitting(true);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      // surface as modal error (ParticipationModal catches thrown errors)
+      throw new Error("Please log in first.");
+    }
 
+    setSubmitting(true);
+    try {
       const res = await fetch(`${API_BASE}/competitions/${c._id}/participate`, {
         method: "POST",
         headers: {
@@ -217,22 +216,22 @@ const Home: React.FC = () => {
       });
 
       const data = await res.json();
-      if (!res.ok)
+      if (!res.ok) {
         throw new Error(
           data?.message || data?.error || "Failed to participate"
         );
+      }
 
-      alert("You're in! Good luck ✨");
-      // optional: navigate(`/competitions/${c._id}`);
-    } catch (e: any) {
-      alert(e?.message || "Could not participate");
+      // IMPORTANT: do NOT close the modal here; resolving lets the modal switch to its "success" phase.
+      // Optionally: refresh featured data here if you want updated participants count
+      // await refreshFeatured();
     } finally {
       setSubmitting(false);
-      setParticipate({ open: false, comp: null });
+      // DO NOT: setParticipate({ open: false, comp: null });
     }
   };
 
-  /* ================= UI consts ================= */
+  /* ============== UI consts ============== */
   const heroSlides = [
     {
       image:
@@ -266,8 +265,9 @@ const Home: React.FC = () => {
   }) => (
     <button
       onClick={onClick}
-      className={`absolute top-1/2 -translate-y-1/2 ${direction === "prev" ? "left-4" : "right-4"}
-      z-10 bg-white/90 p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-all duration-300
+      className={`absolute top-1/2 -translate-y-1/2 ${
+        direction === "prev" ? "left-4" : "right-4"
+      } z-10 bg-white/90 p-2 rounded-full shadow-lg hover:bg-white hover:scale-110 transition-all duration-300
       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
     >
       {direction === "prev" ? (
@@ -300,9 +300,9 @@ const Home: React.FC = () => {
   };
 
   const cover =
-    featured?.bannerUrl ||
-    featured?.images?.[0] ||
-    featured?.image ||
+    (featured?.bannerUrl as any) ||
+    (featured?.images?.[0] as any) ||
+    (featured as any)?.image ||
     "https://images.unsplash.com/photo-1518183214770-9cffbec72538?q=80&auto=format&fit=crop";
 
   return (
@@ -431,7 +431,7 @@ const Home: React.FC = () => {
                         </h3>
                       </div>
 
-                      {/* Metrics: Prize, Heroes (= participants), Time Left */}
+                      {/* Metrics */}
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                         <div className="bg-blue-50 rounded-lg p-3 text-center">
                           <DollarSign className="w-6 h-6 mx-auto mb-1" />
@@ -439,8 +439,8 @@ const Home: React.FC = () => {
                             Prize Pool
                           </span>
                           <span className="block font-bold text-green-600">
-                            {typeof featured.prizePool !== "undefined"
-                              ? `£${featured.prizePool}`
+                            {typeof (featured as any).prizePool !== "undefined"
+                              ? `£${(featured as any).prizePool}`
                               : "—"}
                           </span>
                         </div>
@@ -629,36 +629,7 @@ const Home: React.FC = () => {
           </div>
         </div>
 
-        {/* Help */}
-        <div className="bg-blue-60 py-16 w-full max-w-full">
-          <div className="container mx-auto px-4 max-w-[100vw]">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="text-center"
-            >
-              <HelpCircle className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-                Need Guidance?
-              </h2>
-              <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
-                Visit our Adventurer's Guide for comprehensive tutorials and
-                FAQs. Our Guild Masters are ready to assist you!
-              </p>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate("/help")}
-                className="bg-blue-50 text-blue-600 px-8 py-3 rounded-xl font-semibold hover:bg-blue-100 transition-colors"
-              >
-                Open Adventurer's Guide
-              </motion.button>
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Modal (mount once) */}
+        {/* Modal (portal-rendered) */}
         <ParticipationModal
           open={participate.open}
           competition={participate.comp}

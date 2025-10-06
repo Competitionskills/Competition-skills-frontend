@@ -1,7 +1,13 @@
-// src/components/participationModal.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  X, Clock, ShieldCheck, Info, Ticket, CheckCircle, Trophy, AlertTriangle,
+  X,
+  Clock,
+  ShieldCheck,
+  Info,
+  Ticket,
+  CheckCircle,
+  Trophy,
+  AlertTriangle,
 } from "lucide-react";
 
 type Competition = {
@@ -20,6 +26,7 @@ type Props = {
   open: boolean;
   competition: Competition | null;
   onClose: () => void;
+  /** Should throw on failure; resolve on success */
   onConfirm: (competition: Competition) => Promise<void> | void;
   isSubmitting?: boolean;
 };
@@ -46,22 +53,7 @@ const ParticipationModal: React.FC<Props> = ({
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // lock page scroll while modal is open
-  useEffect(() => {
-    if (!open) return;
-    const prevOverflow = document.body.style.overflow;
-    const prevPadding = document.body.style.paddingRight;
-    // naive scrollbar compensation (optional)
-    const scrollbarW = window.innerWidth - document.documentElement.clientWidth;
-    document.body.style.overflow = "hidden";
-    if (scrollbarW > 0) document.body.style.paddingRight = `${scrollbarW}px`;
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      document.body.style.paddingRight = prevPadding;
-    };
-  }, [open]);
-
-  // reset state when opened
+  // Reset when opened
   useEffect(() => {
     if (open) {
       setPhase("form");
@@ -71,6 +63,16 @@ const ParticipationModal: React.FC<Props> = ({
       setErrorMsg(null);
       setSubmitting(false);
     }
+  }, [open]);
+
+  // Lock background scroll while modal is open
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, [open]);
 
   if (!open || !competition) return null;
@@ -99,17 +101,16 @@ const ParticipationModal: React.FC<Props> = ({
 
   return (
     <div
-      className={`
-        fixed inset-0 z-[100]
-        bg-black/60 backdrop-blur-sm
+      className="
+        fixed inset-0 z-50 bg-black/60 backdrop-blur-sm
         flex items-end sm:items-center justify-center
         p-0 sm:p-6
-        h-[100dvh] overscroll-contain
-      `}
-      role="dialog"
+        h-[100dvh] overflow-y-auto overscroll-contain
+      "
       aria-modal="true"
+      role="dialog"
     >
-      {/* click outside to close (desktop) */}
+      {/* click outside area (desktop) */}
       <button
         aria-hidden
         onClick={onClose}
@@ -118,20 +119,15 @@ const ParticipationModal: React.FC<Props> = ({
       />
 
       <div
-        className={`
-          w-full sm:max-w-3xl
-          bg-white shadow-2xl
+        className="
+          w-full sm:max-w-3xl bg-white shadow-2xl
           rounded-t-2xl sm:rounded-2xl
-          sm:mx-auto
-          // make the PANEL scrollable
-          max-h-[100dvh] sm:max-h-[90vh]
-          h-auto sm:h-auto
           flex flex-col
-          pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]
-        `}
+          max-h-[90dvh]
+        "
       >
-        {/* Sticky header */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b sticky top-0 bg-white z-10 rounded-t-2xl">
+        {/* Header (sticky) */}
+        <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white rounded-t-2xl">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-indigo-600" />
             <h3 className="text-lg font-semibold text-indigo-900">
@@ -147,12 +143,12 @@ const ParticipationModal: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* Scrollable content area */}
-        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5">
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto">
           {phase === "form" ? (
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2">
               {/* Left */}
-              <div>
+              <div className="p-6 md:border-r">
                 {(() => {
                   const cover = c.bannerUrl || c.images?.[0];
                   return cover ? (
@@ -192,7 +188,7 @@ const ParticipationModal: React.FC<Props> = ({
               </div>
 
               {/* Right */}
-              <div>
+              <div className="p-6">
                 <div className="flex items-center gap-2 mb-2">
                   <Info className="h-4 w-4 text-indigo-600" />
                   <p className="text-sm font-medium text-indigo-800">
@@ -200,8 +196,7 @@ const ParticipationModal: React.FC<Props> = ({
                   </p>
                 </div>
 
-                {/* Let the main panel scroll; no fixed height here */}
-                <div className="overflow-hidden rounded-lg border bg-gray-50 p-3 text-xs leading-5 text-gray-700 mb-4">
+                <div className="max-h-64 md:max-h-72 overflow-y-auto border rounded-lg p-3 text-xs leading-5 bg-gray-50 text-gray-700 mb-4">
                   <p>
                     • This is a <strong>skill-based entry</strong>. No wagering
                     or gambling.
@@ -243,7 +238,6 @@ const ParticipationModal: React.FC<Props> = ({
                     onChange={(e) => setAnswer(e.target.value)}
                     placeholder="Type your answer"
                     className="w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    inputMode="numeric"
                   />
                   {answer && (
                     <div className="mt-2 text-sm flex items-center gap-1">
@@ -270,7 +264,7 @@ const ParticipationModal: React.FC<Props> = ({
               </div>
             </div>
           ) : (
-            <div className="p-2">
+            <div className="p-8">
               <div className="flex flex-col items-center text-center">
                 <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
                   <Trophy className="h-7 w-7 text-green-600" />
@@ -280,7 +274,9 @@ const ParticipationModal: React.FC<Props> = ({
                 </h4>
                 <p className="mt-2 text-slate-600">
                   Your entry to{" "}
-                  <span className="font-semibold text-indigo-700">{c.title}</span>{" "}
+                  <span className="font-semibold text-indigo-700">
+                    {c.title}
+                  </span>{" "}
                   was successful.
                 </p>
 
@@ -293,48 +289,54 @@ const ParticipationModal: React.FC<Props> = ({
                     <div className="text-sm text-indigo-900">
                       <div className="font-semibold">Entry Cost</div>
                       <div>
-                        {c.entryCost} prestige ticket{c.entryCost > 1 ? "s" : ""}
+                        {c.entryCost} prestige ticket
+                        {c.entryCost > 1 ? "s" : ""}
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
-                  <button
-                    onClick={onClose}
-                    className="inline-flex justify-center rounded-lg bg-indigo-600 px-5 py-2.5 font-semibold text-white hover:bg-indigo-500"
-                  >
-                    Close
-                  </button>
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Sticky footer actions (kept simple) */}
-        {phase === "form" && (
-          <div className="px-5 sm:px-6 py-4 border-t bg-white sticky bottom-0 rounded-b-2xl">
-            <button
-              onClick={handleConfirm}
-              disabled={disabled}
-              className={`w-full rounded-lg px-4 py-3 font-semibold text-white transition
+        {/* Sticky footer actions */}
+        <div className="px-6 py-4 border-t bg-white sticky bottom-0 rounded-b-2xl">
+          {phase === "form" ? (
+            <>
+              <button
+                onClick={handleConfirm}
+                disabled={disabled}
+                className={`w-full rounded-lg px-4 py-3 font-semibold text-white transition
                 ${
                   disabled
                     ? "bg-gray-300 cursor-not-allowed"
                     : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500"
                 }`}
-            >
-              {submitting || isSubmitting ? "Submitting…" : "Enter Competition"}
-            </button>
-            <button
-              onClick={onClose}
-              className="w-full mt-2 text-sm text-gray-600 hover:text-gray-800"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
+              >
+                {submitting || isSubmitting
+                  ? "Submitting…"
+                  : "Enter Competition"}
+              </button>
+              <button
+                onClick={onClose}
+                className="w-full mt-2 text-sm text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
+              <button
+                onClick={onClose}
+                className="inline-flex justify-center rounded-lg bg-indigo-600 px-5 py-2.5 font-semibold text-white hover:bg-indigo-500"
+              >
+                Close
+              </button>
+              {/* <Link to="/my-competitions" ...>Go to My Competitions</Link> */}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
