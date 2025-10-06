@@ -19,6 +19,7 @@ type CompetitionDoc = {
 };
 
 const API_BASE = process.env.REACT_APP_API_URL || "https://api.scoreperks.co.uk";
+const SUPPORT_EMAIL = process.env.REACT_APP_SUPPORT_EMAIL || "support@scoreperks.co.uk";
 
 // util: normalize many possible id shapes to a string
 const normalizeId = (v: any) =>
@@ -77,10 +78,8 @@ export default function Results() {
     })();
   }, [id]);
 
-  // derived values (✅ all inside component, before any return)
+  // derived values
   const participants: Participant[] = comp?.participants ?? [];
-
-  // simplest way: let normalizeId handle shapes; avoid reading user.id directly
   const currentUserId = normalizeId(user || localStorage.getItem("userId") || "");
   const winnerUserId = comp?.winner?.userId ?? null;
 
@@ -118,6 +117,28 @@ export default function Results() {
     endsAt: comp?.endsAt || new Date().toISOString(),
   }).phase;
 
+  // handlers
+  const handleContactSupport = () => {
+    if (!comp) return;
+    const subject = encodeURIComponent(`Prize claim: ${comp.title} (${comp._id})`);
+    const body = encodeURIComponent(
+      [
+        "Hi ScorePerks team,",
+        "",
+        `I am the winner of "${comp.title}". Please advise the next steps to claim my prize.`,
+        "",
+        `Details:`,
+        `- Competition ID: ${comp._id}`,
+        `- Ticket ID: ${comp.winner?.ticketId ?? ""}`,
+        `- My user ID: ${currentUserId}`,
+        `- Registered email: ${(user as any)?.email ?? comp.winnerEmail ?? ""}`,
+        "",
+        "Thanks!"
+      ].join("\n")
+    );
+    window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+  };
+
   // render
   if (loading) {
     return (
@@ -141,6 +162,8 @@ export default function Results() {
     );
   }
 
+  const isFinalised = phase === "ended" && comp.status === "closed" && !!comp.winner;
+
   return (
     <div className="max-w-3xl mx-auto p-6">
       <div className="flex items-center gap-3 mb-4">
@@ -155,12 +178,21 @@ export default function Results() {
         </p>
 
         {/* Personalized message */}
-        {phase === "ended" && comp.status === "closed" && comp.winner && (
+        {isFinalised && (
           <>
             {isWinner ? (
               <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-emerald-800">
                 🎉 <span className="font-semibold">Congratulations!</span> You are the winner!{" "}
-                <span className="text-gray-700">Ticket:</span> {comp.winner.ticketId}
+                <span className="text-gray-700">Ticket:</span> {comp.winner!.ticketId}
+                {/* Contact button shown ONLY to the winner when finalised */}
+                <div className="mt-3">
+                  <button
+                    onClick={handleContactSupport}
+                    className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  >
+                    Contact us to claim prize
+                  </button>
+                </div>
               </div>
             ) : didEnter ? (
               <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-indigo-800">
@@ -196,6 +228,13 @@ export default function Results() {
             <div className="text-sm text-gray-600 mt-1">
               Ticket: {comp.winner.ticketId}
             </div>
+
+            {/* Redundant contact CTA inside winner block for the winner */}
+            {isWinner && (
+              <div className="mt-3">
+                
+              </div>
+            )}
           </div>
         )}
 
