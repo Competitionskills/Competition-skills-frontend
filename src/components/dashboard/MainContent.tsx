@@ -13,6 +13,7 @@ import comp3 from "../../images/competition3.jpg";
 import comp4 from "../../images/competition4.jpg";
 import comp5 from "../../images/competition5.jpg";
 import comp6 from "../../images/competition6.jpg";
+import { Competition } from "../../types/competition";
 
 import ParticipationModal from "../participationModal";
 import DailyLoginWidget from "./DailyLoginWidget";
@@ -36,18 +37,7 @@ export const API_BASE =
 /* ============================== Types ============================= */
 type CompetitionStatus = "open" | "closed";
 type Participant = { ticketId: string; userId: string };
-type Competition = {
-  _id: string;
-  title: string;
-  description?: string;
-  bannerUrl?: string;
-  images?: string[]; // <— Cloudinary covers
-  startsAt?: string;
-  endsAt: string;
-  entryCost: number;
-  status?: CompetitionStatus; // <— trust backend when present
-  participants?: Participant[];
-};
+
 
 type ParticipateResponse = {
   message?: string;
