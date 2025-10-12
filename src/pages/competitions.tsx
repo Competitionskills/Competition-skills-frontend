@@ -5,7 +5,6 @@ import { Footer } from "../components/footer";
 import BackgroundImage from "../images/background-img.jpg";
 import ParticipationModal from "../components/participationModal";
 
-// CRA env (no import.meta)
 const API_BASE =
   process.env.REACT_APP_API_URL || "https://api.scoreperks.co.uk";
 
@@ -20,11 +19,10 @@ interface Competition {
   maxTicketsPerUser: number; // 0 = unlimited
   status: CompetitionStatus;
   participants?: Array<{ ticketId: string; userId: string }>;
-
-  // images (any one or more may be present)
   bannerUrl?: string;
   images?: string[];
-  coverUrl?: string; // virtual from backend (optional)
+  coverUrl?: string;
+  prizePool?: number | string;
 }
 
 async function http<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -51,10 +49,8 @@ function timeLeft(iso?: string) {
 }
 const isEnded = (c: Competition) =>
   new Date(c.endsAt).getTime() <= Date.now() || c.status !== "open";
-
 const coverFor = (c: Competition) =>
   (c.coverUrl || c.bannerUrl || c.images?.[0] || "").trim();
-
 const timeLabel = (c: Competition) =>
   isEnded(c) ? "Ended" : `Ends in ${timeLeft(c.endsAt)}`;
 
@@ -64,18 +60,15 @@ const CompetitionsPage: React.FC = () => {
   const [list, setList] = useState<Competition[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // description expand/collapse per card
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const toggleDesc = (id: string) =>
-    setExpanded((s) => ({ ...s, [id]: !s[id] }));
-
-  // shared participation modal
   const [modal, setModal] = useState<{ open: boolean; comp: Competition | null }>({
     open: false,
     comp: null,
   });
   const [submitting, setSubmitting] = useState(false);
+
+  const toggleDesc = (id: string) =>
+    setExpanded((s) => ({ ...s, [id]: !s[id] }));
 
   const fetchAll = async (f = filter) => {
     setLoading(true);
@@ -93,7 +86,6 @@ const CompetitionsPage: React.FC = () => {
 
   useEffect(() => {
     fetchAll(filter);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const askParticipate = (c: Competition) => {
@@ -111,7 +103,6 @@ const CompetitionsPage: React.FC = () => {
       setModal({ open: false, comp: null });
       await fetchAll(filter);
     } catch (e) {
-      // rethrow so modal shows the error
       throw e;
     } finally {
       setSubmitting(false);
@@ -127,9 +118,12 @@ const CompetitionsPage: React.FC = () => {
           : "rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700";
 
         return (
-          <div key={c._id} className="rounded-2xl border bg-white p-4 shadow-sm">
-            {/* cover image */}
-            <div className="relative mb-3 h-40 w-full overflow-hidden rounded-xl">
+          <div
+            key={c._id}
+            className="h-full flex flex-col rounded-2xl border bg-white p-4 shadow-sm"
+          >
+            {/* Cover (fixed height) */}
+            <div className="relative mb-3 h-40 w-full overflow-hidden rounded-xl shrink-0">
               {coverFor(c) ? (
                 <img
                   src={coverFor(c)}
@@ -150,42 +144,57 @@ const CompetitionsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* description with Read more / Show less */}
-            <div className="mb-3">
-              <p
-                className={`text-sm text-gray-600 ${
-                  expanded[c._id] ? "" : "line-clamp-2"
-                }`}
-              >
-                {c.description || "No description."}
-              </p>
-              {c.description && c.description.length > 120 && (
-                <button
-                  type="button"
-                  onClick={() => toggleDesc(c._id)}
-                  className="mt-1 text-xs font-semibold text-indigo-700 hover:underline"
+            {/* Middle content (forced min-height so footers align) */}
+            <div className="flex-1 flex flex-col justify-start space-y-3 min-h-[260px]">
+              {/* description */}
+              <div>
+                <p
+                  className={`text-sm text-gray-600 ${
+                    expanded[c._id] ? "" : "line-clamp-2"
+                  }`}
                 >
-                  {expanded[c._id] ? "Show less" : "Read more"}
-                </button>
-              )}
-            </div>
+                  {c.description || "No description."}
+                </p>
+                {c.description && c.description.length > 120 && (
+                  <button
+                    type="button"
+                    onClick={() => toggleDesc(c._id)}
+                    className="mt-1 text-xs font-semibold text-indigo-700 hover:underline"
+                  >
+                    {expanded[c._id] ? "Show less" : "Read more"}
+                  </button>
+                )}
+              </div>
 
-            <div className="mb-3 grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-lg bg-gray-50 p-3">
-                <div className="text-gray-900">Entry cost</div>
-                <div className="font-semibold text-gray-700">
-                  {c.entryCost} prestige ticket(s)
+              {/* info tiles */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="rounded-lg bg-gray-50 p-3">
+                  <div className="text-gray-900">Entry cost</div>
+                  <div className="font-semibold text-gray-700">
+                    {c.entryCost} prestige ticket(s)
+                  </div>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-3">
+                  <div className="text-gray-900">Max per user</div>
+                  <div className="font-semibold text-gray-700">
+                    {c.maxTicketsPerUser || "Unlimited"}
+                  </div>
+                </div>
+
+                {/* Prize pool row spans full width for consistent height */}
+                <div className="col-span-2 rounded-lg bg-yellow-50 p-3">
+                  <div className="text-gray-900">Prize Pool</div>
+                  <div className="font-semibold text-yellow-700">
+                    {typeof c.prizePool === "number" || typeof c.prizePool === "string"
+                      ? `$${c.prizePool}`
+                      : "$0"}
+                  </div>
                 </div>
               </div>
-              <div className="rounded-lg bg-gray-50 p-3">
-                <div className="text-gray-900">Max per user</div>
-                <div className="font-semibold text-gray-700">
-                  {c.maxTicketsPerUser || "Unlimited"}
-                </div>
-              </div>
             </div>
 
-            <div className="flex items-center justify-between">
+            {/* Footer pinned to bottom */}
+            <div className="mt-4 flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => askParticipate(c)}
@@ -220,9 +229,9 @@ const CompetitionsPage: React.FC = () => {
       >
         <div className="absolute inset-0 bg-indigo-900/10 backdrop-blur-sm" />
 
-        <div className="relative mx-auto w-full max-w-6xl p-4 md:p-8">
-          {/* Page title + filter pills */}
-          <div className="mb-6 flex items-center justify-between">
+        {/* Wider container so grid uses almost full width */}
+        <div className="relative mx-auto w-full max-w-[95%] lg:max-w-[92%] p-4 md:p-8">
+          <div className="mb-6 flex items-center justify-between flex-wrap gap-2">
             <div>
               <h1 className="text-2xl font-bold">Competitions</h1>
               <p className="text-sm text-gray-600">Join any open competition.</p>
@@ -245,9 +254,8 @@ const CompetitionsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Content */}
           {loading && (
-            <div className="rounded-xl border bg-white/70 p-6">Loading…</div>
+            <div className="rounded-xl border bg-white/70 p-6 text-center">Loading…</div>
           )}
           {error && (
             <div className="rounded-xl border border-red-300 bg-red-50 p-6 text-red-700">
@@ -256,7 +264,7 @@ const CompetitionsPage: React.FC = () => {
           )}
 
           {!loading && !error && (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
               {cards}
               {cards.length === 0 && (
                 <div className="col-span-full rounded-xl border bg-white/70 p-8 text-center text-sm text-gray-600">
@@ -270,7 +278,6 @@ const CompetitionsPage: React.FC = () => {
 
       <Footer />
 
-      {/* Shared participation modal */}
       <ParticipationModal
         open={modal.open}
         competition={modal.comp as any}

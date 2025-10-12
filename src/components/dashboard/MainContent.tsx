@@ -38,7 +38,6 @@ export const API_BASE =
 type CompetitionStatus = "open" | "closed";
 type Participant = { ticketId: string; userId: string };
 
-
 type ParticipateResponse = {
   message?: string;
   error?: string;
@@ -665,26 +664,42 @@ const MainContent: React.FC<MainContentProps> = ({
                           </div>
 
                           <div className="p-4">
-                            <div className="mb-3 flex items-center justify-between">
-                              <div>
-                                <p className="text-sm text-gray-600">
-                                  Entry Cost
-                                </p>
-                                <p className="text-lg font-bold text-green-600">
-                                  {c.entryCost} prestige ticket
-                                  {c.entryCost > 1 ? "s" : ""}
-                                </p>
+                            <div className="mb-3 grid grid-cols-1 gap-2">
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <p className="text-sm text-gray-600">
+                                    Entry Cost
+                                  </p>
+                                  <p className="text-lg font-bold text-green-600">
+                                    {c.entryCost} prestige ticket
+                                    {c.entryCost > 1 ? "s" : ""}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm text-gray-600">
+                                    Participants
+                                  </p>
+                                  <p className="font-bold text-indigo-600">
+                                    {(
+                                      c.participants?.length ?? 0
+                                    ).toLocaleString()}
+                                  </p>
+                                </div>
                               </div>
-                              <div className="text-right">
-                                <p className="text-sm text-gray-600">
-                                  Participants
-                                </p>
-                                <p className="font-bold text-indigo-600">
-                                  {(
-                                    c.participants?.length ?? 0
-                                  ).toLocaleString()}
-                                </p>
-                              </div>
+
+                              {c.prizePool !== undefined &&
+                                c.prizePool !== null && (
+                                  <div>
+                                    <p className="text-sm text-gray-600">
+                                      Prize Pool
+                                    </p>
+                                    <p className="text-lg font-bold text-yellow-600">
+                                      {typeof c.prizePool === "number"
+                                        ? `$${c.prizePool.toLocaleString()}`
+                                        : c.prizePool}
+                                    </p>
+                                  </div>
+                                )}
                             </div>
 
                             <button

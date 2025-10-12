@@ -91,6 +91,7 @@ const CompetitionForm: React.FC<FormProps> = ({ open, onClose, onSaved }) => {
   const [endsAt, setEndsAt] = useState("");
   const [entryCost, setEntryCost] = useState<number>(1);
   const [maxTicketsPerUser, setMaxTicketsPerUser] = useState<number>(0);
+  const [prizePool, setPrizePool] = useState("");
 
   // NEW: images state
   const [files, setFiles] = useState<File[]>([]);
@@ -142,7 +143,8 @@ const CompetitionForm: React.FC<FormProps> = ({ open, onClose, onSaved }) => {
         endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
         entryCost,
         maxTicketsPerUser,
-        images: imageUrls, // <-- NEW
+        images: imageUrls,
+        prizePool,
       };
 
       await http<Competition>(`/api/competitions`, {
@@ -201,6 +203,17 @@ const CompetitionForm: React.FC<FormProps> = ({ open, onClose, onSaved }) => {
               min={1}
               value={entryCost}
               onChange={(e) => setEntryCost(parseInt(e.target.value || "1"))}
+              className="mt-1 w-full rounded-lg border p-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">
+              Prize Pool (e.g. $1000)
+            </label>
+            <input
+              type="text"
+              value={prizePool}
+              onChange={(e) => setPrizePool(e.target.value)}
               className="mt-1 w-full rounded-lg border p-2"
             />
           </div>
