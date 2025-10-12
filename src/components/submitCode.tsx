@@ -14,22 +14,21 @@ interface RedeemCodeResponse {
   points?: number;
 }
 
-const SubmitCode: React.FC<SubmitCodeProps> = ({ isOpen, onClose, onPointsUpdated }) => {
+const SubmitCode: React.FC<SubmitCodeProps> = ({
+  isOpen,
+  onClose,
+  onPointsUpdated,
+}) => {
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  // success = show green; error = show red; none = hide
   const [status, setStatus] = useState<"success" | "error" | "none">("none");
   const [fadeIn, setFadeIn] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // focus input whenever modal opens
   useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    if (isOpen) setTimeout(() => inputRef.current?.focus(), 50);
   }, [isOpen]);
 
   useEffect(() => {
@@ -52,19 +51,23 @@ const SubmitCode: React.FC<SubmitCodeProps> = ({ isOpen, onClose, onPointsUpdate
         code: code.trim(),
       });
 
-      const pts = Number(res.data.points || 0);
+      const { success, message, points } = res.data;
+      const pts = Number(points ?? 0);
 
-      // Green only when we actually awarded points
-      if (pts > 0) {
-        setMessage(`${res.data.message} (+${pts} points)`);
-        setStatus("success");
-        onPointsUpdated?.(pts);
-        setCode(""); // clear the field on success
-      } else {
-        // success response but 0 points -> treat as info/error visually (red)
-        setMessage(res.data.message || "No points awarded.");
-        setStatus("error");
-      }
+      // Color comes from success flag
+      setStatus(success ? "success" : "error");
+
+      // Show (+N points) only when points were granted
+      setMessage(
+        success
+          ? pts > 0
+            ? `${message} (+${pts} points)`
+            : message || "Code accepted."
+          : message || "Invalid code."
+      );
+
+      if (success && pts > 0) onPointsUpdated?.(pts);
+      if (success) setCode(""); // clear input on any successful redemption
     } catch (err) {
       setMessage("Failed to redeem code. Please try again.");
       setStatus("error");
@@ -103,7 +106,10 @@ const SubmitCode: React.FC<SubmitCodeProps> = ({ isOpen, onClose, onPointsUpdate
         {/* Body */}
         <div className="p-6 space-y-4">
           <div>
-            <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="code"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Enter your code
             </label>
             <input
@@ -112,7 +118,9 @@ const SubmitCode: React.FC<SubmitCodeProps> = ({ isOpen, onClose, onPointsUpdate
               type="text"
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !isLoading && handleSubmitCode()}
+              onKeyDown={(e) =>
+                e.key === "Enter" && !isLoading && handleSubmitCode()
+              }
               placeholder="Type your code here"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               disabled={isLoading}
