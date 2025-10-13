@@ -39,7 +39,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           />
         </div>
 
-        <div className="flex items-center space-x-1">
+        {/* <div className="flex items-center space-x-1">
           <div className="flex items-center space-x-1 bg-indigo-600 rounded-full px-3 py-1">
             <Star className="h-3 w-3 text-yellow-300" />
             <span className="text-xs font-medium">{userPoints}</span>
@@ -48,7 +48,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           <div className="h-8 w-8 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold text-xs ring-1 ring-white/50">
             {userName ? userName.substring(0, 2).toUpperCase() : "??"}
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
