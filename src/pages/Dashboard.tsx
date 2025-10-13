@@ -140,8 +140,7 @@ const openSubmitCode = () => setShowSubmitCode(true);
       navigate('/leaderboard');
       } else if (tab === 'competitions') {
     navigate('/competitions');            // ✅ competitions page
-  } else if (tab === 'settings') {
-    navigate('/settings');          
+          
     } else if (tab === 'buy-tickets') {
       setShowBuyTickets(true);
     } else if (tab === 'referrals') {
