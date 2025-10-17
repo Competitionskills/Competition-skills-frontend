@@ -1,359 +1,216 @@
-import React from "react";
-import { User, Phone, MapPin, Save, Loader2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import Sidebar from "../components/dashboard/Sidebar";
 import Header from "../components/Header";
-import { Footer } from "../components/footer";
-import BackgroundImage from "../images/background-img.jpg";
-import { useUser } from "../context/userContext";
 
-const API_BASE = process.env.REACT_APP_API_URL || "https://api.scoreperks.co.uk";
-
-type Address = {
-  line1: string;
-  line2?: string;
-  city: string;
-  state?: string;
-  postcode: string;
-  country: string;
-};
-
-type ProfilePayload = {
-  name: string;
-  phone?: string;
-  address?: Address;
-};
-
-function toAddressString(a?: Partial<Address> | null) {
-  if (!a) return "—";
-  return [a.line1, a.line2, a.city, a.state, a.postcode, a.country]
-    .filter(Boolean)
-    .join(", ");
-}
-
-export default function Settings() {
-  const { user, refreshUser } = useUser();
-
-  // Seed fields from user (fallbacks included)
-  const [name, setName] = React.useState<string>(
-    (user as any)?.name ||
-      (user as any)?.fullName ||
-      (user as any)?.username ||
-      ""
-  );
-  const [phone, setPhone] = React.useState<string>((user as any)?.phone || "");
-  const [addr, setAddr] = React.useState<Address>({
-    line1: (user as any)?.address?.line1 || "",
-    line2: (user as any)?.address?.line2 || "",
-    city: (user as any)?.address?.city || "",
-    state: (user as any)?.address?.state || "",
-    postcode: (user as any)?.address?.postcode || "",
-    country: (user as any)?.address?.country || "",
+const Settings: React.FC = () => {
+  const [form, setForm] = useState({
+    fullName: "",
+    username: "",
+    postCode: "",
+    phoneNumber: "",
+    email: "",
   });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const token = localStorage.getItem("token");
 
-  const [saving, setSaving] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-  const [savedAt, setSavedAt] = React.useState<Date | null>(null);
+  // 🧩 Fetch user profile
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get("https://api.scoreperks.co.uk/api/users/user", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setForm({
+          fullName: res.data.fullName || "",
+          username: res.data.username || "",
+          postCode: res.data.postCode || "",
+          phoneNumber: res.data.phoneNumber || "",
+          email: res.data.email || "",
+        });
+      } catch (err) {
+        console.error("❌ Error fetching user:", err);
+        setError("Failed to load your profile. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (token) fetchUser();
+  }, [token]);
 
-  // Simple validation
-  const phoneOk =
-    !phone ||
-    /^[+]?[\d\s()-]{7,}$/.test(phone); // permissive but avoids obvious junk
-  const nameOk = name.trim().length >= 2;
-  const addressOk = addr.line1.trim().length > 0 && addr.city.trim().length > 0 && addr.postcode.trim().length > 0 && addr.country.trim().length > 0;
+  // 🧩 Input Handlers
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
-  const dirty =
-    name !== ((user as any)?.name || (user as any)?.fullName || (user as any)?.username || "") ||
-    phone !== ((user as any)?.phone || "") ||
-    addr.line1 !== ((user as any)?.address?.line1 || "") ||
-    (addr.line2 || "") !== ((user as any)?.address?.line2 || "") ||
-    addr.city !== ((user as any)?.address?.city || "") ||
-    (addr.state || "") !== ((user as any)?.address?.state || "") ||
-    addr.postcode !== ((user as any)?.address?.postcode || "") ||
-    addr.country !== ((user as any)?.address?.country || "");
+  const handlePhoneChange = (value: string) =>
+    setForm({ ...form, phoneNumber: value });
 
-  const canSave = !saving && dirty && nameOk && phoneOk && addressOk;
-
-  // Save handler: tries /api/users/me then falls back to /api/profile
-  const onSave = async () => {
-    if (!canSave) return;
+  // 🧩 Save Profile
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setSaving(true);
-    setError(null);
-
-    const token = localStorage.getItem("token") || "";
-    const payload: ProfilePayload = {
-      name: name.trim(),
-      phone: phone.trim() || undefined,
-      address: {
-        line1: addr.line1.trim(),
-        line2: addr.line2?.trim() || "",
-        city: addr.city.trim(),
-        state: addr.state?.trim() || "",
-        postcode: addr.postcode.trim(),
-        country: addr.country.trim(),
-      },
-    };
-
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-
-    async function tryPut(url: string) {
-      const res = await fetch(url, {
-        method: "PUT",
-        headers,
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    }
+    setMessage("");
+    setError("");
 
     try {
-      // primary
-      try {
-        await tryPut(`${API_BASE}/api/users/me`);
-      } catch {
-        // fallback
-        await tryPut(`${API_BASE}/api/profile`);
-      }
-      await refreshUser?.();
-      setSavedAt(new Date());
-    } catch (e: any) {
-      setError(e?.message || "Could not save changes");
+      const res = await axios.put(
+        "https://api.scoreperks.co.uk/api/users/me",
+        {
+          name: form.username,
+          fullName: form.fullName,
+          phone: form.phoneNumber,
+          postCode: form.postCode,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setMessage(res.data.message || "Profile updated successfully!");
+    } catch (err) {
+      console.error("❌ Update failed:", err);
+      setError("Failed to update profile. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-
-      <div
-        className="relative flex-grow bg-cover bg-center"
-        style={{ backgroundImage: `url(${BackgroundImage})` }}
-      >
-        <div className="absolute inset-0 bg-indigo-900/10 backdrop-blur-sm" />
-
-        <div className="relative py-6 px-6 sm:px-8 lg:px-10 w-full max-w-6xl mx-auto">
-          {/* Title */}
-          <div className="mb-6">
-            <h1 className="text-3xl font-extrabold text-slate-900">
-              Settings
-            </h1>
-            <p className="text-slate-600">
-              Review and update your profile details.
-            </p>
-          </div>
-
-          {/* Content: 2 cols on desktop */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Form card */}
-            <div className="lg:col-span-2 bg-white/90 rounded-2xl border border-indigo-100 p-6 shadow-sm">
-              <div className="space-y-5">
-                {/* Name */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Name
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-indigo-600" />
-                    <input
-                      type="text"
-                      className={`w-full rounded-lg border px-9 py-2 outline-none ${
-                        nameOk
-                          ? "border-slate-200 focus:ring-2 focus:ring-indigo-200"
-                          : "border-red-300 focus:ring-2 focus:ring-red-200"
-                      }`}
-                      placeholder="Your full name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                    />
-                  </div>
-                  {!nameOk && (
-                    <p className="mt-1 text-xs text-red-600">
-                      Please enter at least 2 characters.
-                    </p>
-                  )}
-                </div>
-
-                {/* Phone */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Contact number
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-indigo-600" />
-                    <input
-                      type="tel"
-                      className={`w-full rounded-lg border px-9 py-2 outline-none ${
-                        phoneOk
-                          ? "border-slate-200 focus:ring-2 focus:ring-indigo-200"
-                          : "border-red-300 focus:ring-2 focus:ring-red-200"
-                      }`}
-                      placeholder="+1 555 123 4567"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                    />
-                  </div>
-                  {!phoneOk && (
-                    <p className="mt-1 text-xs text-red-600">
-                      Please enter a valid phone number.
-                    </p>
-                  )}
-                </div>
-
-                {/* Address */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Address
-                  </label>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="sm:col-span-2 relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-indigo-600" />
-                      <input
-                        type="text"
-                        className="w-full rounded-lg border border-slate-200 px-9 py-2 outline-none focus:ring-2 focus:ring-indigo-200"
-                        placeholder="Address line 1"
-                        value={addr.line1}
-                        onChange={(e) => setAddr({ ...addr, line1: e.target.value })}
-                      />
-                    </div>
-                    <input
-                      type="text"
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-200"
-                      placeholder="Address line 2 (optional)"
-                      value={addr.line2}
-                      onChange={(e) => setAddr({ ...addr, line2: e.target.value })}
-                    />
-                    <input
-                      type="text"
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-200"
-                      placeholder="City"
-                      value={addr.city}
-                      onChange={(e) => setAddr({ ...addr, city: e.target.value })}
-                    />
-                    <input
-                      type="text"
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-200"
-                      placeholder="State / Province"
-                      value={addr.state}
-                      onChange={(e) => setAddr({ ...addr, state: e.target.value })}
-                    />
-                    <input
-                      type="text"
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-200"
-                      placeholder="Postcode"
-                      value={addr.postcode}
-                      onChange={(e) => setAddr({ ...addr, postcode: e.target.value })}
-                    />
-                    <input
-                      type="text"
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-200"
-                      placeholder="Country"
-                      value={addr.country}
-                      onChange={(e) => setAddr({ ...addr, country: e.target.value })}
-                    />
-                  </div>
-
-                  {!addressOk && (
-                    <p className="mt-1 text-xs text-red-600">
-                      Please fill line 1, city, postcode and country.
-                    </p>
-                  )}
-                </div>
-
-                {/* Actions */}
-                {error && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                    {error}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={onSave}
-                    disabled={!canSave}
-                    className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-                  >
-                    {saving ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" /> Saving…
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4" /> Save changes
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => {
-                      // reset to user values
-                      setName(
-                        (user as any)?.name ||
-                          (user as any)?.fullName ||
-                          (user as any)?.username ||
-                          ""
-                      );
-                      setPhone((user as any)?.phone || "");
-                      setAddr({
-                        line1: (user as any)?.address?.line1 || "",
-                        line2: (user as any)?.address?.line2 || "",
-                        city: (user as any)?.address?.city || "",
-                        state: (user as any)?.address?.state || "",
-                        postcode: (user as any)?.address?.postcode || "",
-                        country: (user as any)?.address?.country || "",
-                      });
-                      setError(null);
-                    }}
-                    className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    Cancel
-                  </button>
-
-                  {savedAt && (
-                    <span className="text-xs text-slate-500">
-                      Saved at {savedAt.toLocaleTimeString()}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Review / Preview card */}
-            <div className="bg-white/90 rounded-2xl border border-indigo-100 p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-indigo-900 mb-3">
-                Preview
-              </h3>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <div className="text-slate-500">Name</div>
-                  <div className="font-semibold text-slate-900">
-                    {name || "—"}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-slate-500">Contact</div>
-                  <div className="font-semibold text-slate-900">
-                    {phone || "—"}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-slate-500">Address</div>
-                  <div className="font-semibold text-slate-900">
-                    {toAddressString(addr)}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-5 rounded-lg border border-indigo-100 bg-indigo-50/60 p-3 text-xs text-indigo-800">
-                Tip: Make sure your address is accurate for prize deliveries.
-              </div>
-            </div>
-          </div>
-        </div>
+  // 🧩 Loader
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <p className="text-gray-600">Loading profile...</p>
       </div>
+    );
 
-      <Footer />
+  return (
+    <div className="flex min-h-screen bg-gray-50">
+      
+      {/* Main Section */}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <Header />
+
+        {/* Alert Banner */}
+        {(message || error) && (
+          <div
+            className={`text-center py-3 font-medium ${
+              message ? "bg-green-500 text-white" : "bg-red-500 text-white"
+            }`}
+          >
+            {message || error}
+          </div>
+        )}
+
+        {/* Settings Content */}
+        <main className="p-6 md:p-10">
+          <div className="bg-white shadow-md rounded-2xl p-8 max-w-2xl mx-auto">
+            <h2 className="text-2xl font-semibold text-indigo-700 mb-6 text-center">
+              Account Settings
+            </h2>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Full Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  name="fullName"
+                  value={form.fullName}
+                  onChange={handleChange}
+                  placeholder="Enter your full name"
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              {/* Username */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  name="username"
+                  value={form.username}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number
+                </label>
+                <PhoneInput
+                  country="gb"
+                  value={form.phoneNumber}
+                  onChange={handlePhoneChange}
+                  inputStyle={{
+                    width: "100%",
+                    height: "42px",
+                    fontSize: "15px",
+                    borderRadius: "0.5rem",
+                    borderColor: "#d1d5db",
+                  }}
+                  buttonStyle={{
+                    backgroundColor: "transparent",
+                    borderColor: "#d1d5db",
+                  }}
+                />
+              </div>
+
+              {/* Post Code */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Post Code
+                </label>
+                <input
+                  type="text"
+                  name="postCode"
+                  value={form.postCode}
+                  onChange={handleChange}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={form.email}
+                  readOnly
+                  className="w-full p-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700"
+                />
+              </div>
+
+              {/* Save Button */}
+              <button
+                type="submit"
+                disabled={saving}
+                className={`w-full py-2 text-white rounded-lg font-medium transition ${
+                  saving
+                    ? "bg-indigo-400 cursor-not-allowed"
+                    : "bg-indigo-600 hover:bg-indigo-500"
+                }`}
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+            </form>
+          </div>
+        </main>
+      </div>
     </div>
   );
-}
+};
+
+export default Settings;
