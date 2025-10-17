@@ -34,7 +34,7 @@ const Signup = () => {
     email: "",
     password: "",
     postCode: "",
-    phone: "",
+    phoneNumber: "",
     referralCode: "",
   });
 
@@ -55,13 +55,13 @@ const Signup = () => {
   };
 
   const handlePhoneChange = (value: string) => {
-    setFormData({ ...formData, phone: value });
+    setFormData({ ...formData, phoneNumber: value });
   };
 
   const validateForm = () => {
-    const { fullName, username, email, password, postCode, phone } = formData;
+    const { fullName, username, email, password, postCode, phoneNumber } = formData;
 
-    if (!fullName || !username || !email || !password || !postCode || !phone) {
+    if (!fullName || !username || !email || !password || !postCode || !phoneNumber) {
       setError("Please fill in all required fields.");
       return false;
     }
@@ -79,7 +79,7 @@ const Signup = () => {
       return false;
     }
     // Ensure phone is E.164-ish
-    const phoneWithPlus = phone.startsWith("+") ? phone : `+${phone}`;
+    const phoneWithPlus = phoneNumber.startsWith("+") ? phoneNumber : `+${phoneNumber}`;
     const cleanedPhone = phoneWithPlus.replace(/\s+/g, "");
     if (!/^\+[1-9]\d{1,14}$/.test(cleanedPhone)) {
       setError("Phone must be valid and in international format, e.g. +447911123456");
@@ -99,14 +99,14 @@ const Signup = () => {
     setError("");
 
     // normalize phone & postcode just before sending
-    const cleanedPhone = formData.phone.replace(/\s+/g, "");
+    const cleanedPhone = formData.phoneNumber.replace(/\s+/g, "");
     const finalPhone = cleanedPhone.startsWith("+") ? cleanedPhone : `+${cleanedPhone}`;
     const finalPostcode = normalizeUKPostcode(formData.postCode) || formData.postCode.trim().toUpperCase();
 
     try {
       const response = await api.post("/users/register", {
         ...formData,
-        phone: finalPhone,
+        phoneNumber: finalPhone,
         postCode: finalPostcode,
       });
 
@@ -167,7 +167,7 @@ const Signup = () => {
             <div className="relative">
               <PhoneInput
                 country="gb"
-                value={formData.phone}
+                value={formData.phoneNumber}
                 onChange={handlePhoneChange}
                 inputStyle={{
                   width: "100%",
