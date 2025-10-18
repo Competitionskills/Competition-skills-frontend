@@ -23,9 +23,10 @@ const Settings: React.FC = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await axios.get("https://api.scoreperks.co.uk/api/users/user", {
+        const res = await axios.get("https://api.scoreperks.co.uk/api/users/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
+
         setForm({
           fullName: res.data.fullName || "",
           username: res.data.username || "",
@@ -40,8 +41,20 @@ const Settings: React.FC = () => {
         setLoading(false);
       }
     };
+
     if (token) fetchUser();
   }, [token]);
+
+  // 🧩 Auto-clear alerts after 3 seconds
+  useEffect(() => {
+    if (message || error) {
+      const timer = setTimeout(() => {
+        setMessage("");
+        setError("");
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [message, error]);
 
   // 🧩 Input Handlers
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -61,8 +74,8 @@ const Settings: React.FC = () => {
       const res = await axios.put(
         "https://api.scoreperks.co.uk/api/users/me",
         {
-          name: form.username,
           fullName: form.fullName,
+          username: form.username,
           phone: form.phoneNumber,
           postCode: form.postCode,
         },
@@ -70,6 +83,7 @@ const Settings: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
       setMessage(res.data.message || "Profile updated successfully!");
     } catch (err) {
       console.error("❌ Update failed:", err);
@@ -89,7 +103,8 @@ const Settings: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      
+     
+
       {/* Main Section */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
@@ -98,8 +113,10 @@ const Settings: React.FC = () => {
         {/* Alert Banner */}
         {(message || error) && (
           <div
-            className={`text-center py-3 font-medium ${
-              message ? "bg-green-500 text-white" : "bg-red-500 text-white"
+            className={`text-center py-3 font-medium transition-all ${
+              message
+                ? "bg-green-500 text-white"
+                : "bg-red-500 text-white"
             }`}
           >
             {message || error}
