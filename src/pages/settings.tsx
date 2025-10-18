@@ -23,7 +23,7 @@ const Settings: React.FC = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await axios.get("https://api.scoreperks.co.uk/api/users/me", {
+        const res = await axios.get("https://api.scoreperks.co.uk/api/users/user", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
